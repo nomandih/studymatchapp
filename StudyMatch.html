@@ -1,0 +1,997 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>StudyMatch</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;0,9..40,800;1,9..40,400&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/react@18/umd/react.development.js" crossorigin></script>
+<script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js" crossorigin></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: #06060c;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'DM Sans', sans-serif;
+    overflow: hidden;
+  }
+  .phone-shell {
+    width: 390px; height: 844px;
+    background: #09090f;
+    border-radius: 54px;
+    position: relative;
+    overflow: hidden;
+    box-shadow:
+      0 0 0 1px #1f1f35,
+      0 0 0 11px #0d0d1a,
+      0 0 0 13px #1a1a2e,
+      0 40px 100px rgba(139,92,246,0.25),
+      0 20px 60px rgba(0,0,0,0.8);
+  }
+  .phone-notch {
+    position: absolute; top: 0; left: 50%;
+    transform: translateX(-50%);
+    width: 126px; height: 37px;
+    background: #09090f;
+    border-radius: 0 0 22px 22px;
+    z-index: 100;
+  }
+  .phone-notch::before {
+    content: '';
+    position: absolute; top: 10px; left: 50%;
+    transform: translateX(-50%);
+    width: 60px; height: 5px;
+    background: #1f1f35; border-radius: 3px;
+  }
+  .status-bar {
+    position: absolute; top: 0; left: 0; right: 0;
+    height: 50px;
+    display: flex; align-items: flex-end; justify-content: space-between;
+    padding: 0 22px 8px;
+    z-index: 99;
+    font-size: 12px; font-weight: 600;
+    color: rgba(232,232,255,0.8);
+  }
+  .home-indicator {
+    position: absolute; bottom: 10px; left: 50%;
+    transform: translateX(-50%);
+    width: 134px; height: 5px;
+    background: rgba(232,232,255,0.3); border-radius: 3px;
+    z-index: 100;
+  }
+  .screen-area {
+    position: absolute;
+    top: 50px; left: 0; right: 0; bottom: 20px;
+    overflow: hidden;
+  }
+  @keyframes fadeIn {
+    from { opacity:0; transform:translateY(8px); }
+    to   { opacity:1; transform:translateY(0); }
+  }
+  @keyframes confettiFall {
+    0%   { transform: translateY(-20px) rotate(0deg); opacity:1; }
+    100% { transform: translateY(860px) rotate(720deg); opacity:0; }
+  }
+  ::-webkit-scrollbar { width: 0; }
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+const { useState, useRef, useEffect, useContext, createContext } = React;
+
+// ── Design tokens ──────────────────────────────────────────────────────────
+const C = {
+  bg:'#09090f', surface:'#13131f', border:'#1f1f35',
+  grad:'linear-gradient(135deg,#8b5cf6,#3b82f6)',
+  accent:'#8b5cf6', accentLight:'#c084fc',
+  text:'#e8e8ff', textSub:'rgba(232,232,255,0.5)', textMuted:'rgba(232,232,255,0.3)',
+  red:'#ff4d6d', green:'#22c55e',
+};
+
+// ── Language context ───────────────────────────────────────────────────────
+const LangCtx = createContext({ lang:'en', toggle:()=>{} });
+
+function useLang() {
+  const { lang } = useContext(LangCtx);
+  const t = (en, zh) => lang === 'en' ? en : zh;
+  return { lang, t };
+}
+
+// ── Static data ────────────────────────────────────────────────────────────
+const CARDS = [
+  { id:1, name:'Emily Chan', year:'S5', district:'Kowloon Tong',
+    bio:'"Physics is hard but we can figure it out together 💪"',
+    bioZh:'"物理很難，但我們可以一起攻克它 💪"',
+    subjects:['Physics','Chemistry','Maths'],
+    styles:['Active Recall','Past Papers'], avail:['Weekday evenings'], match:92 },
+  { id:2, name:'Marcus Lam', year:'S6', district:'Sha Tin',
+    bio:'"Past papers every day. Let\'s grind together 📝"',
+    bioZh:'"每天做卷。一起努力吧 📝"',
+    subjects:['Maths','Economics','BAFS'],
+    styles:['Past Papers','Pomodoro'], avail:['Weekend mornings'], match:78 },
+  { id:3, name:'Sophie Wong', year:'S5', district:'Causeway Bay',
+    bio:'"Looking for someone serious about English & History"',
+    bioZh:'"尋找認真學習英文和歷史的人"',
+    subjects:['English','History','Geography'],
+    styles:['Group Discussion','Note-taking'], avail:['Weekday evenings','Weekend afternoons'], match:64 },
+];
+
+const SUBJECTS_EN = ['Physics','Chemistry','Biology','Maths','Economics','History','Geography','English','Chinese','Liberal Studies','BAFS','ICT'];
+const SUBJECTS_ZH = ['物理','化學','生物','數學','經濟','歷史','地理','英文','中文','通識','企業財管','資訊科技'];
+const STYLES_EN   = ['Active Recall','Past Papers','Group Discussion','Note-taking','Mind Maps','Pomodoro'];
+const STYLES_ZH   = ['主動回憶','做試卷','小組討論','筆記','思維導圖','番茄鐘'];
+const AVAIL_EN    = ['Weekday mornings','Weekday evenings','Weekend mornings','Weekend afternoons'];
+const AVAIL_ZH    = ['平日早上','平日晚上','週末早上','週末下午'];
+const LOC_EN      = ['Library 📚','Café ☕','Online 💻','Flexible 📍'];
+const LOC_ZH      = ['圖書館 📚','咖啡廳 ☕','網上 💻','彈性 📍'];
+
+// ── Shared UI atoms ────────────────────────────────────────────────────────
+function Tag({ label, color='purple' }) {
+  const bg = color==='purple'?'rgba(139,92,246,0.2)':color==='blue'?'rgba(59,130,246,0.2)':'rgba(255,255,255,0.08)';
+  const cl = color==='purple'?'#c084fc':color==='blue'?'#93c5fd':'rgba(232,232,255,0.5)';
+  const br = color==='purple'?'rgba(139,92,246,0.3)':color==='blue'?'rgba(59,130,246,0.3)':'rgba(255,255,255,0.1)';
+  return <span style={{ display:'inline-block', padding:'3px 10px', borderRadius:20, background:bg, color:cl, fontSize:10, fontWeight:600, border:`1px solid ${br}` }}>{label}</span>;
+}
+
+function Pill({ label, selected, onToggle }) {
+  return (
+    <button onClick={onToggle} style={{
+      padding:'7px 14px', borderRadius:20, fontSize:12, fontWeight:500,
+      border: selected ? '1px solid #8b5cf6' : '1px solid #1f1f35',
+      background: selected ? 'rgba(139,92,246,0.25)' : 'rgba(255,255,255,0.04)',
+      color: selected ? '#c084fc' : C.textSub, cursor:'pointer', transition:'all .15s',
+      fontFamily:'DM Sans,sans-serif',
+    }}>{label}</button>
+  );
+}
+
+function Btn({ label, onClick, outline=false, style={} }) {
+  return (
+    <button onClick={onClick} style={{
+      width:'100%', padding:'14px 24px', borderRadius:14, fontSize:15, fontWeight:600,
+      background: outline ? 'transparent' : C.grad,
+      border: outline ? `1px solid ${C.red}` : 'none',
+      color: outline ? C.red : '#fff',
+      cursor:'pointer', transition:'opacity .15s', letterSpacing:0.3,
+      fontFamily:'DM Sans,sans-serif', ...style,
+    }}
+    onMouseEnter={e=>e.currentTarget.style.opacity='.85'}
+    onMouseLeave={e=>e.currentTarget.style.opacity='1'}
+    >{label}</button>
+  );
+}
+
+function GlassCard({ children, style={} }) {
+  return <div style={{ background:'rgba(139,92,246,0.08)', border:'1px solid rgba(139,92,246,0.2)', borderRadius:24, backdropFilter:'blur(12px)', boxShadow:'0 8px 32px rgba(139,92,246,0.1)', padding:18, ...style }}>{children}</div>;
+}
+
+function SectionLabel({ children }) {
+  return <div style={{ fontSize:11, fontWeight:700, color:C.accentLight, letterSpacing:1, textTransform:'uppercase', display:'block', marginBottom:8 }}>{children}</div>;
+}
+
+// ── Bottom Nav ─────────────────────────────────────────────────────────────
+function BottomNav({ active, onNav }) {
+  const { t } = useLang();
+  const tabs = [
+    { id:'browse', icon:'🔍', en:'Browse', zh:'配對' },
+    { id:'create', icon:'➕', en:'Create', zh:'發佈' },
+    { id:'chat',   icon:'💬', en:'Chat',   zh:'訊息' },
+    { id:'profile',icon:'👤', en:'Profile',zh:'我' },
+  ];
+  return (
+    <div style={{ position:'absolute', bottom:0, left:0, right:0, height:64, background:'rgba(9,9,15,0.95)', backdropFilter:'blur(20px)', borderTop:'1px solid #1f1f35', display:'flex', alignItems:'center', justifyContent:'space-around', padding:'0 8px', zIndex:50 }}>
+      {tabs.map(tab => (
+        <button key={tab.id} onClick={()=>onNav(tab.id)} style={{ flex:1, display:'flex', flexDirection:'column', alignItems:'center', gap:2, background:'none', border:'none', cursor:'pointer', padding:'6px 0', position:'relative' }}>
+          {active===tab.id && <div style={{ position:'absolute', top:0, left:'50%', transform:'translateX(-50%)', width:28, height:3, borderRadius:2, background:C.grad }}/>}
+          <span style={{ fontSize:19 }}>{tab.icon}</span>
+          <span style={{ fontSize:10, fontWeight:600, color: active===tab.id ? C.accentLight : C.textMuted, fontFamily:'DM Sans,sans-serif' }}>{t(tab.en, tab.zh)}</span>
+        </button>
+      ))}
+    </div>
+  );
+}
+
+// ── Toast ──────────────────────────────────────────────────────────────────
+function Toast({ msg, visible }) {
+  return (
+    <div style={{ position:'absolute', bottom:80, left:20, right:20, zIndex:200, background:'rgba(139,92,246,0.9)', color:'#fff', padding:'12px 18px', borderRadius:14, fontSize:14, fontWeight:600, textAlign:'center', backdropFilter:'blur(10px)', transform: visible?'translateY(0)':'translateY(20px)', opacity: visible?1:0, transition:'all .3s ease', pointerEvents:'none' }}>{msg}</div>
+  );
+}
+
+// ════════════════════════════════════════════════════════════════
+// SCREEN 1 — Onboarding
+// ════════════════════════════════════════════════════════════════
+function Screen1({ onNext }) {
+  const { t } = useLang();
+  const [email, setEmail] = useState('');
+
+  const features = [
+    { icon:'🔒', en:'Verified Students', zh:'已驗證學生' },
+    { icon:'🙅', en:'No Photos Required', zh:'無需照片' },
+    { icon:'🛡️', en:'Safe & Moderated', zh:'安全有保障' },
+  ];
+
+  return (
+    <div style={{ height:'100%', display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', padding:'0 28px', position:'relative', overflow:'hidden' }}>
+      <div style={{ position:'absolute', top:'15%', left:'50%', transform:'translateX(-50%)', width:260, height:260, borderRadius:'50%', background:'radial-gradient(circle,rgba(139,92,246,0.25) 0%,transparent 70%)', pointerEvents:'none' }}/>
+      <div style={{ position:'absolute', bottom:'20%', right:'-10%', width:180, height:180, borderRadius:'50%', background:'radial-gradient(circle,rgba(59,130,246,0.15) 0%,transparent 70%)', pointerEvents:'none' }}/>
+
+      <div style={{ textAlign:'center', marginBottom:10 }}>
+        <div style={{ fontSize:52, fontWeight:800, background:C.grad, WebkitBackgroundClip:'text', WebkitTextFillColor:'transparent', letterSpacing:-1, lineHeight:1 }}>
+          Study<br/>Match
+        </div>
+        <div style={{ fontSize:13, color:C.textSub, marginTop:10, letterSpacing:0.3, lineHeight:1.5 }}>
+          {t('Find your person. Ace your exams.','找到你的人。考出好成績。')}
+        </div>
+      </div>
+
+      <div style={{ display:'flex', flexDirection:'column', gap:8, marginTop:28, marginBottom:32, width:'100%' }}>
+        {features.map(f => (
+          <div key={f.en} style={{ display:'flex', alignItems:'center', gap:12, background:'rgba(255,255,255,0.04)', border:'1px solid #1f1f35', borderRadius:12, padding:'10px 14px' }}>
+            <span style={{ fontSize:16 }}>{f.icon}</span>
+            <span style={{ fontSize:13, color:C.text, fontWeight:500 }}>{t(f.en, f.zh)}</span>
+          </div>
+        ))}
+      </div>
+
+      <div style={{ width:'100%', marginBottom:14 }}>
+        <input type="email" placeholder="yourname@school.edu.hk" value={email} onChange={e=>setEmail(e.target.value)}
+          style={{ width:'100%', padding:'13px 16px', borderRadius:14, background:'rgba(255,255,255,0.06)', border:'1px solid #1f1f35', color:C.text, fontSize:14, outline:'none', fontFamily:'DM Sans,sans-serif' }}/>
+      </div>
+
+      <Btn label={t('Get Started →', '開始使用 →')} onClick={onNext}/>
+
+      <p style={{ fontSize:11, color:C.textMuted, marginTop:16, textAlign:'center', lineHeight:1.6 }}>
+        {t('For HK DSE students only','只限香港文憑試學生')}
+      </p>
+    </div>
+  );
+}
+
+// ════════════════════════════════════════════════════════════════
+// SCREEN 2 — Profile Setup
+// ════════════════════════════════════════════════════════════════
+function Screen2({ onNext }) {
+  const { t, lang } = useLang();
+  const [name, setName] = useState('');
+  const [school, setSchool] = useState('');
+  const [year, setYear] = useState('S5');
+  const [subjects, setSubjects] = useState([0, 1]);
+  const [styles, setStyles] = useState([0]);
+  const [avail, setAvail] = useState([1]);
+
+  function toggle(arr, setArr, idx) {
+    setArr(arr.includes(idx) ? arr.filter(x=>x!==idx) : [...arr, idx]);
+  }
+
+  const SUBJECTS = lang==='en' ? SUBJECTS_EN : SUBJECTS_ZH;
+  const STYLES   = lang==='en' ? STYLES_EN   : STYLES_ZH;
+  const AVAIL    = lang==='en' ? AVAIL_EN    : AVAIL_ZH;
+
+  const inputStyle = { width:'100%', padding:'11px 14px', borderRadius:12, background:'rgba(255,255,255,0.05)', border:'1px solid #1f1f35', color:C.text, fontSize:14, outline:'none', fontFamily:'DM Sans,sans-serif' };
+
+  return (
+    <div style={{ height:'100%', display:'flex', flexDirection:'column' }}>
+      <div style={{ padding:'14px 22px 10px', borderBottom:'1px solid #1f1f35' }}>
+        <div style={{ display:'flex', justifyContent:'center', gap:6, marginBottom:12 }}>
+          {[0,1,2].map(i => <div key={i} style={{ width:i===0?24:8, height:8, borderRadius:4, background:i===0?C.accent:'#1f1f35' }}/>)}
+        </div>
+        <div style={{ fontSize:20, fontWeight:700, color:C.text }}>{t('Build Your Profile','建立你的學習檔案')}</div>
+        <div style={{ fontSize:12, color:C.textSub }}>{t('Tell us about yourself','告訴我們你的資料')}</div>
+      </div>
+
+      <div style={{ flex:1, overflowY:'auto', padding:'16px 22px', display:'flex', flexDirection:'column', gap:18 }}>
+        <div>
+          <SectionLabel>{t('Display Name','暱稱')}</SectionLabel>
+          <input value={name} onChange={e=>setName(e.target.value)} placeholder={t('e.g. Emily C.','例如：Emily C.')} style={inputStyle}/>
+        </div>
+        <div>
+          <SectionLabel>{t('School','學校')}</SectionLabel>
+          <input value={school} onChange={e=>setSchool(e.target.value)} placeholder={t("e.g. Diocesan Girls' School",'例如：拔萃女書院')} style={inputStyle}/>
+        </div>
+        <div>
+          <SectionLabel>{t('Year Level','年級')}</SectionLabel>
+          <div style={{ display:'flex', gap:8 }}>
+            {['S4','S5','S6'].map(y => (
+              <button key={y} onClick={()=>setYear(y)} style={{ flex:1, padding:'10px', borderRadius:12, background:year===y?C.grad:'rgba(255,255,255,0.04)', border:year===y?'none':'1px solid #1f1f35', color:year===y?'#fff':C.textSub, fontWeight:600, fontSize:14, cursor:'pointer', fontFamily:'DM Sans,sans-serif' }}>{y}</button>
+            ))}
+          </div>
+        </div>
+        <div>
+          <SectionLabel>{t('Subjects','科目')}</SectionLabel>
+          <div style={{ display:'flex', flexWrap:'wrap', gap:6 }}>
+            {SUBJECTS.map((s,i) => <Pill key={i} label={s} selected={subjects.includes(i)} onToggle={()=>toggle(subjects,setSubjects,i)}/>)}
+          </div>
+        </div>
+        <div>
+          <SectionLabel>{t('Study Style','學習方式')}</SectionLabel>
+          <div style={{ display:'flex', flexWrap:'wrap', gap:6 }}>
+            {STYLES.map((s,i) => <Pill key={i} label={s} selected={styles.includes(i)} onToggle={()=>toggle(styles,setStyles,i)}/>)}
+          </div>
+        </div>
+        <div>
+          <SectionLabel>{t('Availability','空閒時間')}</SectionLabel>
+          <div style={{ display:'flex', flexWrap:'wrap', gap:6 }}>
+            {AVAIL.map((a,i) => <Pill key={i} label={a} selected={avail.includes(i)} onToggle={()=>toggle(avail,setAvail,i)}/>)}
+          </div>
+        </div>
+        <div style={{ paddingBottom:8 }}>
+          <Btn label={t('Next →','下一步 →')} onClick={onNext}/>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ════════════════════════════════════════════════════════════════
+// SCREEN 3 — Home
+// ════════════════════════════════════════════════════════════════
+function Screen3({ onNav, matches }) {
+  const { t } = useLang();
+  return (
+    <div style={{ height:'100%', display:'flex', flexDirection:'column' }}>
+      <div style={{ padding:'16px 22px 12px' }}>
+        <div style={{ fontSize:22, fontWeight:700, color:C.text }}>{t('Good evening, Emily 👋','晚上好，Emily 👋')}</div>
+        <div style={{ fontSize:13, color:C.textSub, marginTop:2 }}>{t("What do you want to do today?",'你今天想做什麼？')}</div>
+      </div>
+
+      <div style={{ flex:1, overflowY:'auto', padding:'8px 22px' }}>
+        <div style={{ display:'flex', gap:12, marginBottom:20 }}>
+          <button onClick={()=>onNav('browse')} style={{ flex:1, padding:'20px 14px', borderRadius:22, background:C.grad, border:'none', cursor:'pointer', textAlign:'left', color:'#fff', fontFamily:'DM Sans,sans-serif' }}>
+            <div style={{ fontSize:26, marginBottom:8 }}>🔍</div>
+            <div style={{ fontSize:15, fontWeight:700 }}>{t('Browse','配對')}</div>
+            <div style={{ fontSize:11, opacity:0.8, marginTop:2 }}>{t('Find a study partner','尋找學習夥伴')}</div>
+          </button>
+          <button onClick={()=>onNav('create')} style={{ flex:1, padding:'20px 14px', borderRadius:22, background:'rgba(255,255,255,0.04)', border:'1px solid #1f1f35', cursor:'pointer', textAlign:'left', color:C.text, fontFamily:'DM Sans,sans-serif' }}>
+            <div style={{ fontSize:26, marginBottom:8 }}>➕</div>
+            <div style={{ fontSize:15, fontWeight:700 }}>{t('Create','發佈')}</div>
+            <div style={{ fontSize:11, color:C.textSub, marginTop:2 }}>{t('Post your card','發佈學習卡')}</div>
+          </button>
+        </div>
+
+        <div style={{ marginBottom:8 }}>
+          <div style={{ fontSize:13, fontWeight:700, color:C.textSub, letterSpacing:0.8, textTransform:'uppercase', marginBottom:12 }}>
+            {t('Recent Matches','最近配對')}
+          </div>
+          <div style={{ display:'flex', flexDirection:'column', gap:10 }}>
+            {matches.map(m => (
+              <button key={m.id} onClick={()=>onNav('chat')} style={{ display:'flex', alignItems:'center', gap:12, background:'rgba(139,92,246,0.08)', border:'1px solid rgba(139,92,246,0.2)', borderRadius:16, padding:'12px 16px', cursor:'pointer', textAlign:'left', fontFamily:'DM Sans,sans-serif' }}>
+                <div style={{ width:38, height:38, borderRadius:'50%', background:C.grad, display:'flex', alignItems:'center', justifyContent:'center', fontSize:15, fontWeight:700, color:'#fff', flexShrink:0 }}>{m.name.charAt(0)}</div>
+                <div>
+                  <div style={{ fontSize:14, fontWeight:600, color:C.text }}>{m.name}</div>
+                  <div style={{ fontSize:11, color:C.textSub }}>{m.subjects.slice(0,2).join(' · ')}</div>
+                </div>
+                <div style={{ marginLeft:'auto', fontSize:11, fontWeight:700, color:C.green, background:'rgba(34,197,94,0.1)', padding:'3px 8px', borderRadius:8 }}>{m.match}%</div>
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div style={{ display:'flex', gap:10, marginTop:16 }}>
+          {[
+            ['12', t('Students nearby','附近學生')],
+            ['3',  t('New matches','新配對')],
+            ['1',  t('Pending session','待確認')],
+          ].map(([n,l]) => (
+            <div key={l} style={{ flex:1, textAlign:'center', padding:'12px 8px', background:'rgba(255,255,255,0.03)', border:'1px solid #1f1f35', borderRadius:14 }}>
+              <div style={{ fontSize:20, fontWeight:700, color:C.accentLight }}>{n}</div>
+              <div style={{ fontSize:10, color:C.textMuted, marginTop:2, lineHeight:1.3 }}>{l}</div>
+            </div>
+          ))}
+        </div>
+      </div>
+      <BottomNav active="browse" onNav={onNav}/>
+    </div>
+  );
+}
+
+// ════════════════════════════════════════════════════════════════
+// SCREEN 4 — Browse (Swipe Cards)
+// ════════════════════════════════════════════════════════════════
+function Screen4({ onNav, onMatch }) {
+  const { t, lang } = useLang();
+  const [deck, setDeck] = useState([...CARDS]);
+  const [drag, setDrag] = useState({ x:0, y:0, dragging:false });
+  const [leaving, setLeaving] = useState(null);
+  const startRef = useRef(null);
+
+  function handlePointerDown(e) {
+    startRef.current = { x:e.clientX, y:e.clientY };
+    setDrag({ x:0, y:0, dragging:true });
+  }
+  function handlePointerMove(e) {
+    if (!drag.dragging) return;
+    setDrag(d => ({ ...d, x:e.clientX-startRef.current.x, y:e.clientY-startRef.current.y }));
+  }
+  function handlePointerUp() {
+    if (!drag.dragging) return;
+    if (drag.x > 80) swipe('right');
+    else if (drag.x < -80) swipe('left');
+    else setDrag({ x:0, y:0, dragging:false });
+  }
+  function swipe(dir) {
+    setLeaving(dir);
+    setTimeout(() => {
+      if (dir==='right' && deck[0]?.id===1) { onMatch(); return; }
+      setDeck(d => d.slice(1));
+      setLeaving(null);
+      setDrag({ x:0, y:0, dragging:false });
+    }, 350);
+  }
+
+  const rot = drag.x * 0.06;
+  const likeOp = Math.min(drag.x/60, 1);
+  const nopeOp = Math.min(-drag.x/60, 1);
+
+  return (
+    <div style={{ height:'100%', display:'flex', flexDirection:'column' }}>
+      <div style={{ padding:'14px 22px 8px', display:'flex', alignItems:'center', justifyContent:'space-between' }}>
+        <div>
+          <div style={{ fontSize:20, fontWeight:700, color:C.text }}>{t('Browse','配對')}</div>
+          <div style={{ fontSize:12, color:C.textSub }}>{t('12 students near you','附近12位同學')}</div>
+        </div>
+        <button style={{ background:'rgba(255,255,255,0.05)', border:'1px solid #1f1f35', borderRadius:10, padding:'7px 12px', color:C.textSub, fontSize:12, cursor:'pointer', fontFamily:'DM Sans,sans-serif' }}>⚙️ {t('Filter','篩選')}</button>
+      </div>
+
+      <div style={{ flex:1, position:'relative', overflow:'hidden', padding:'0 22px' }}
+        onPointerMove={handlePointerMove} onPointerUp={handlePointerUp} onPointerLeave={handlePointerUp}>
+        {deck.length===0 && (
+          <div style={{ height:'100%', display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', gap:12 }}>
+            <div style={{ fontSize:40 }}>🎉</div>
+            <div style={{ fontSize:16, fontWeight:700, color:C.text }}>{t("You've seen everyone!",'你已看完所有人！')}</div>
+            <div style={{ fontSize:13, color:C.textSub }}>{t('Check back tomorrow','明天再看看')}</div>
+          </div>
+        )}
+
+        {deck.slice(0,3).map((card, i) => {
+          const isTop = i===0;
+          const scale = 1 - i*0.04;
+          const tx = isTop ? drag.x : 0;
+          const ty = isTop ? drag.y*0.3 : i*10;
+          const r  = isTop ? rot : 0;
+          const lx = leaving==='right' ? 500 : leaving==='left' ? -500 : 0;
+          const ly = leaving ? -80 : 0;
+
+          return (
+            <div key={card.id}
+              onPointerDown={isTop ? handlePointerDown : undefined}
+              style={{ position:'absolute', left:22, right:22, top:8, transform:`translate(${tx+lx}px,${ty+ly}px) rotate(${r}deg) scale(${scale})`, transition:(!drag.dragging||leaving)?'transform .35s cubic-bezier(.25,.46,.45,.94)':'none', cursor:isTop?'grab':'default', zIndex:10-i, userSelect:'none' }}>
+
+              {isTop && <>
+                <div style={{ position:'absolute', top:20, left:16, zIndex:20, border:'3px solid #22c55e', borderRadius:8, padding:'4px 10px', color:'#22c55e', fontSize:18, fontWeight:800, letterSpacing:2, opacity:likeOp, transform:'rotate(-15deg)' }}>{t('CONNECT','配對')}</div>
+                <div style={{ position:'absolute', top:20, right:16, zIndex:20, border:'3px solid #ff4d6d', borderRadius:8, padding:'4px 10px', color:'#ff4d6d', fontSize:18, fontWeight:800, letterSpacing:2, opacity:nopeOp, transform:'rotate(15deg)' }}>{t('PASS','跳過')}</div>
+              </>}
+
+              <div style={{ background:'rgba(19,19,31,0.95)', border:'1px solid rgba(139,92,246,0.25)', borderRadius:24, padding:'18px 18px 16px', backdropFilter:'blur(12px)', boxShadow:'0 8px 32px rgba(139,92,246,0.15)', minHeight:400 }}>
+                <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-start', marginBottom:12 }}>
+                  <div>
+                    <div style={{ fontSize:18, fontWeight:700, color:C.text }}>{card.name}</div>
+                    <div style={{ fontSize:12, color:C.textSub, marginTop:2 }}>{card.year} · {card.district}</div>
+                  </div>
+                  <div style={{ background:'linear-gradient(135deg,rgba(139,92,246,0.3),rgba(59,130,246,0.3))', border:'1px solid rgba(139,92,246,0.4)', borderRadius:12, padding:'5px 10px', textAlign:'center' }}>
+                    <div style={{ fontSize:14, fontWeight:800, color:C.accentLight }}>{card.match}%</div>
+                    <div style={{ fontSize:9, color:C.textSub }}>{t('match','配對度')}</div>
+                  </div>
+                </div>
+                <div style={{ fontSize:13, color:C.textSub, fontStyle:'italic', marginBottom:14, lineHeight:1.5, padding:'10px 12px', background:'rgba(255,255,255,0.03)', borderRadius:12 }}>
+                  {lang==='en' ? card.bio : card.bioZh}
+                </div>
+                <div style={{ marginBottom:10 }}>
+                  <div style={{ fontSize:10, fontWeight:700, color:C.textMuted, letterSpacing:0.8, textTransform:'uppercase', marginBottom:6 }}>{t('Subjects','科目')}</div>
+                  <div style={{ display:'flex', flexWrap:'wrap', gap:5 }}>
+                    {card.subjects.map(s => <Tag key={s} label={s} color="purple"/>)}
+                  </div>
+                </div>
+                <div style={{ marginBottom:10 }}>
+                  <div style={{ fontSize:10, fontWeight:700, color:C.textMuted, letterSpacing:0.8, textTransform:'uppercase', marginBottom:6 }}>{t('Study Style','學習方式')}</div>
+                  <div style={{ display:'flex', flexWrap:'wrap', gap:5 }}>
+                    {card.styles.map(s => <Tag key={s} label={s} color="blue"/>)}
+                  </div>
+                </div>
+                <div>
+                  <div style={{ fontSize:10, fontWeight:700, color:C.textMuted, letterSpacing:0.8, textTransform:'uppercase', marginBottom:6 }}>{t('Availability','空閒時間')}</div>
+                  <div style={{ display:'flex', flexWrap:'wrap', gap:5 }}>
+                    {card.avail.map(a => <Tag key={a} label={a} color="grey"/>)}
+                  </div>
+                </div>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      <div style={{ padding:'12px 22px 8px', display:'flex', justifyContent:'center', alignItems:'center', gap:24 }}>
+        <button onClick={()=>swipe('left')} style={{ width:60, height:60, borderRadius:'50%', background:'rgba(255,77,109,0.1)', border:'2px solid #ff4d6d', fontSize:22, cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center' }}>✕</button>
+        <button onClick={()=>swipe('right')} style={{ width:70, height:70, borderRadius:'50%', background:C.grad, border:'none', fontSize:26, cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center', boxShadow:'0 4px 20px rgba(139,92,246,0.4)' }}>♥</button>
+      </div>
+
+      <BottomNav active="browse" onNav={onNav}/>
+    </div>
+  );
+}
+
+// ════════════════════════════════════════════════════════════════
+// SCREEN 5 — Create Card
+// ════════════════════════════════════════════════════════════════
+function Screen5({ onNav, onPost }) {
+  const { t, lang } = useLang();
+  const [bio, setBio] = useState('');
+  const [subjects, setSubjects] = useState([0]);
+  const [styles, setStyles] = useState([0]);
+  const [avail, setAvail] = useState([1]);
+  const [locIdx, setLocIdx] = useState(0);
+
+  function toggle(arr, setArr, idx) {
+    setArr(arr.includes(idx) ? arr.filter(x=>x!==idx) : [...arr, idx]);
+  }
+
+  const SUBJECTS = lang==='en' ? SUBJECTS_EN : SUBJECTS_ZH;
+  const STYLES   = lang==='en' ? STYLES_EN   : STYLES_ZH;
+  const LOC      = lang==='en' ? LOC_EN      : LOC_ZH;
+
+  return (
+    <div style={{ height:'100%', display:'flex', flexDirection:'column' }}>
+      <div style={{ padding:'14px 22px 10px', borderBottom:'1px solid #1f1f35' }}>
+        <div style={{ fontSize:20, fontWeight:700, color:C.text }}>{t('Create Card','發佈學習卡')}</div>
+        <div style={{ fontSize:12, color:C.textSub, marginTop:2 }}>{t('Let others find you','讓別人找到你')}</div>
+      </div>
+
+      <div style={{ flex:1, overflowY:'auto', padding:'14px 22px', display:'flex', flexDirection:'column', gap:16 }}>
+        <GlassCard style={{ padding:'14px 16px' }}>
+          <div style={{ fontSize:11, fontWeight:700, color:C.accentLight, letterSpacing:1, textTransform:'uppercase', marginBottom:8 }}>{t('Preview','預覽')}</div>
+          <div style={{ fontSize:15, fontWeight:700, color:C.text }}>{t('Your Name · S5','你的名字 · S5')}</div>
+          <div style={{ fontSize:12, color:C.textSub, marginTop:2, fontStyle:'italic' }}>
+            {bio || t('"Tell others what you\'re looking for..."','"告訴別人你在找什麼..."')}
+          </div>
+          <div style={{ display:'flex', flexWrap:'wrap', gap:5, marginTop:10 }}>
+            {subjects.slice(0,3).map(i => <Tag key={i} label={SUBJECTS[i]} color="purple"/>)}
+          </div>
+        </GlassCard>
+
+        <div>
+          <div style={{ display:'flex', justifyContent:'space-between', marginBottom:6 }}>
+            <SectionLabel>{t('Bio','介紹')}</SectionLabel>
+            <span style={{ fontSize:11, color:C.textMuted }}>{bio.length}/120</span>
+          </div>
+          <textarea value={bio} onChange={e=>setBio(e.target.value.slice(0,120))}
+            placeholder={t("Tell others what you're looking for...",'告訴別人你在找什麼...')}
+            rows={3}
+            style={{ width:'100%', padding:'11px 14px', borderRadius:12, background:'rgba(255,255,255,0.05)', border:'1px solid #1f1f35', color:C.text, fontSize:13, outline:'none', resize:'none', fontFamily:'DM Sans,sans-serif', lineHeight:1.5 }}/>
+        </div>
+
+        <div>
+          <SectionLabel>{t('Subjects','科目')}</SectionLabel>
+          <div style={{ display:'flex', flexWrap:'wrap', gap:6 }}>
+            {SUBJECTS.map((s,i) => <Pill key={i} label={s} selected={subjects.includes(i)} onToggle={()=>toggle(subjects,setSubjects,i)}/>)}
+          </div>
+        </div>
+        <div>
+          <SectionLabel>{t('Study Style','學習方式')}</SectionLabel>
+          <div style={{ display:'flex', flexWrap:'wrap', gap:6 }}>
+            {STYLES.map((s,i) => <Pill key={i} label={s} selected={styles.includes(i)} onToggle={()=>toggle(styles,setStyles,i)}/>)}
+          </div>
+        </div>
+        <div>
+          <SectionLabel>{t('Location','地點')}</SectionLabel>
+          <div style={{ display:'flex', flexWrap:'wrap', gap:6 }}>
+            {LOC.map((l,i) => <Pill key={i} label={l} selected={locIdx===i} onToggle={()=>setLocIdx(i)}/>)}
+          </div>
+        </div>
+        <div style={{ paddingBottom:8 }}>
+          <Btn label={t('Post Card 🚀','發佈 🚀')} onClick={onPost}/>
+        </div>
+      </div>
+
+      <BottomNav active="create" onNav={onNav}/>
+    </div>
+  );
+}
+
+// ════════════════════════════════════════════════════════════════
+// SCREEN 6 — Match!
+// ════════════════════════════════════════════════════════════════
+function Screen6({ onChat, onBrowse }) {
+  const { t } = useLang();
+  const [particles] = useState(() =>
+    Array.from({length:20}, (_,i) => ({
+      id:i, x:Math.random()*100,
+      delay:Math.random()*1.5, dur:1.5+Math.random()*1.5,
+      size:4+Math.random()*8,
+      color:['#8b5cf6','#c084fc','#3b82f6','#93c5fd','#f59e0b','#34d399'][i%6],
+    }))
+  );
+
+  return (
+    <div style={{ height:'100%', display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', background:'linear-gradient(160deg,#1a0a3d 0%,#0d1a3a 50%,#09090f 100%)', padding:'0 28px', position:'relative', overflow:'hidden', textAlign:'center' }}>
+      {particles.map(p => (
+        <div key={p.id} style={{ position:'absolute', left:`${p.x}%`, top:-20, width:p.size, height:p.size, borderRadius:p.id%2===0?'50%':2, background:p.color, animation:`confettiFall ${p.dur}s ${p.delay}s infinite linear`, pointerEvents:'none' }}/>
+      ))}
+      <div style={{ position:'absolute', top:'30%', left:'50%', transform:'translate(-50%,-50%)', width:300, height:300, borderRadius:'50%', background:'radial-gradient(circle,rgba(139,92,246,0.4) 0%,transparent 70%)', pointerEvents:'none' }}/>
+
+      <div style={{ position:'relative', zIndex:10 }}>
+        <div style={{ fontSize:56, marginBottom:16 }}>🎉</div>
+        <div style={{ fontSize:28, fontWeight:800, color:'#fff', marginBottom:4 }}>{t("It's a Match!",'配對成功！')}</div>
+
+        <div style={{ display:'flex', alignItems:'center', justifyContent:'center', gap:12, margin:'24px 0 20px' }}>
+          {['Y','E'].map((l,i) => (
+            <div key={i} style={{ width:56, height:56, borderRadius:'50%', background:i===0?'linear-gradient(135deg,#3b82f6,#1d4ed8)':C.grad, display:'flex', alignItems:'center', justifyContent:'center', fontSize:22, fontWeight:700, color:'#fff', boxShadow:`0 0 0 3px #09090f, 0 0 0 5px ${i===0?'#3b82f6':'#8b5cf6'}` }}>{l}</div>
+          ))}
+        </div>
+
+        <div style={{ fontSize:17, fontWeight:700, color:C.text, marginBottom:8 }}>{t('You & Emily Chan','你和 Emily Chan')}</div>
+        <div style={{ fontSize:13, color:C.textSub, lineHeight:1.6, marginBottom:28 }}>
+          {t("You're both serious about Physics. Time to study together!",'你們都認真學習物理，是時候一起學習了！')}
+        </div>
+
+        <Btn label={t('Start Chatting →','開始聊天 →')} onClick={onChat}/>
+        <button onClick={onBrowse} style={{ display:'block', width:'100%', marginTop:12, background:'none', border:'none', color:C.textSub, fontSize:14, cursor:'pointer', padding:8, fontFamily:'DM Sans,sans-serif' }}>
+          {t('Keep Browsing','繼續配對')}
+        </button>
+      </div>
+    </div>
+  );
+}
+
+// ════════════════════════════════════════════════════════════════
+// SCREEN 7 — Chat
+// ════════════════════════════════════════════════════════════════
+function Screen7({ onNav, onSchedule }) {
+  const { t, lang } = useLang();
+  const [msgs, setMsgs] = useState([
+    { from:'emily', en:"Hey! Saw you're also doing Physics DSE 👋", zh:'嗨！看到你也在學物理文憑試 👋' },
+    { from:'me',    en:"Yeah! I'm focusing on mechanics right now", zh:'對！我現在專注力學部分' },
+    { from:'emily', en:"Same! Want to do past papers together this week?", zh:'我也是！這週想一起做試卷嗎？' },
+    { from:'me',    en:"Definitely! When are you free?", zh:'當然！你什麼時候有空？' },
+    { from:'emily', en:"Thursday evening works for me 🙂", zh:'星期四晚上我有空 🙂' },
+  ]);
+  const [input, setInput] = useState('');
+  const listRef = useRef(null);
+
+  useEffect(() => { if (listRef.current) listRef.current.scrollTop = listRef.current.scrollHeight; }, [msgs]);
+
+  function send() {
+    if (!input.trim()) return;
+    setMsgs(m => [...m, { from:'me', en:input, zh:input }]);
+    setInput('');
+  }
+
+  return (
+    <div style={{ height:'100%', display:'flex', flexDirection:'column' }}>
+      <div style={{ padding:'12px 22px', borderBottom:'1px solid #1f1f35', display:'flex', alignItems:'center', gap:12 }}>
+        <button onClick={()=>onNav('browse')} style={{ background:'none', border:'none', color:C.textSub, fontSize:18, cursor:'pointer' }}>←</button>
+        <div style={{ width:38, height:38, borderRadius:'50%', background:C.grad, display:'flex', alignItems:'center', justifyContent:'center', fontSize:16, fontWeight:700, color:'#fff' }}>E</div>
+        <div>
+          <div style={{ fontSize:15, fontWeight:700, color:C.text }}>Emily Chan</div>
+          <div style={{ display:'flex', alignItems:'center', gap:5 }}>
+            <div style={{ width:7, height:7, borderRadius:'50%', background:C.green }}/>
+            <span style={{ fontSize:11, color:C.green }}>{t('Online','在綫')}</span>
+          </div>
+        </div>
+      </div>
+
+      <div ref={listRef} style={{ flex:1, overflowY:'auto', padding:'14px 22px', display:'flex', flexDirection:'column', gap:10 }}>
+        {msgs.map((m,i) => (
+          <div key={i} style={{ display:'flex', justifyContent:m.from==='me'?'flex-end':'flex-start' }}>
+            <div style={{ maxWidth:'72%', padding:'10px 14px', borderRadius:m.from==='me'?'18px 18px 4px 18px':'18px 18px 18px 4px', background:m.from==='me'?C.grad:'rgba(255,255,255,0.07)', border:m.from==='me'?'none':'1px solid #1f1f35', fontSize:13, color:'#fff', lineHeight:1.5 }}>
+              {lang==='en' ? m.en : m.zh}
+            </div>
+          </div>
+        ))}
+      </div>
+
+      <button onClick={onSchedule} style={{ margin:'0 22px 8px', padding:'11px 16px', background:'linear-gradient(135deg,rgba(139,92,246,0.2),rgba(59,130,246,0.2))', border:'1px solid rgba(139,92,246,0.3)', borderRadius:14, display:'flex', alignItems:'center', gap:10, cursor:'pointer', textAlign:'left', fontFamily:'DM Sans,sans-serif' }}>
+        <span style={{ fontSize:18 }}>📅</span>
+        <div>
+          <div style={{ fontSize:13, fontWeight:600, color:C.accentLight }}>{t('Book a session','預約時間')}</div>
+          <div style={{ fontSize:11, color:C.textSub }}>{t('Schedule your study session with Emily','預約與Emily的學習時間')}</div>
+        </div>
+        <span style={{ marginLeft:'auto', color:C.accentLight, fontSize:16 }}>›</span>
+      </button>
+
+      <div style={{ padding:'0 22px 10px', display:'flex', gap:10 }}>
+        <input value={input} onChange={e=>setInput(e.target.value)} onKeyDown={e=>e.key==='Enter'&&send()}
+          placeholder={t('Message...','訊息...')}
+          style={{ flex:1, padding:'11px 14px', borderRadius:24, background:'rgba(255,255,255,0.06)', border:'1px solid #1f1f35', color:C.text, fontSize:14, outline:'none', fontFamily:'DM Sans,sans-serif' }}/>
+        <button onClick={send} style={{ width:44, height:44, borderRadius:'50%', background:C.grad, border:'none', cursor:'pointer', fontSize:16, display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>→</button>
+      </div>
+
+      <BottomNav active="chat" onNav={onNav}/>
+    </div>
+  );
+}
+
+// ════════════════════════════════════════════════════════════════
+// SCREEN 8 — Schedule
+// ════════════════════════════════════════════════════════════════
+function Screen8({ onNav }) {
+  const { t, lang } = useLang();
+  const [selectedDay, setSelectedDay] = useState(3);
+  const [timeSlot, setTimeSlot] = useState(2);
+  const [locIdx, setLocIdx] = useState(0);
+  const [notes, setNotes] = useState('');
+  const [confirmed, setConfirmed] = useState(false);
+
+  const daysEn = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+  const daysZh = ['一','二','三','四','五','六','日'];
+  const days   = lang==='en' ? daysEn : daysZh;
+  const dates  = [4,5,6,7,8,9,10];
+  const timesEn = ['Morning 9–12','Afternoon 12–6','Evening 6–9'];
+  const timesZh = ['早上 9–12','下午 12–6','晚上 6–9'];
+  const times   = lang==='en' ? timesEn : timesZh;
+  const LOC     = lang==='en' ? LOC_EN  : LOC_ZH;
+
+  return (
+    <div style={{ height:'100%', display:'flex', flexDirection:'column' }}>
+      <div style={{ padding:'12px 22px 10px', borderBottom:'1px solid #1f1f35', display:'flex', alignItems:'center', gap:10 }}>
+        <button onClick={()=>onNav('chat')} style={{ background:'none', border:'none', color:C.textSub, fontSize:18, cursor:'pointer' }}>←</button>
+        <div style={{ fontSize:18, fontWeight:700, color:C.text }}>{t('Book a Session','預約時間')}</div>
+      </div>
+
+      <div style={{ flex:1, overflowY:'auto', padding:'14px 22px', display:'flex', flexDirection:'column', gap:16 }}>
+        <div style={{ display:'flex', alignItems:'center', gap:10 }}>
+          <span style={{ fontSize:13, color:C.textSub }}>{t('With:','對象：')}</span>
+          <div style={{ padding:'5px 14px', borderRadius:20, background:'rgba(139,92,246,0.15)', border:'1px solid rgba(139,92,246,0.3)', fontSize:13, fontWeight:600, color:C.accentLight }}>Emily Chan</div>
+        </div>
+
+        <div>
+          <SectionLabel>{t('Date','日期')}</SectionLabel>
+          <div style={{ background:'rgba(255,255,255,0.03)', border:'1px solid #1f1f35', borderRadius:16, padding:'12px' }}>
+            <div style={{ fontSize:13, fontWeight:600, color:C.text, textAlign:'center', marginBottom:10 }}>{t('May 2026','2026年5月')}</div>
+            <div style={{ display:'grid', gridTemplateColumns:'repeat(7,1fr)', gap:4 }}>
+              {days.map(d => <div key={d} style={{ textAlign:'center', fontSize:10, fontWeight:600, color:C.textMuted, padding:'4px 0' }}>{d}</div>)}
+              {dates.map((date,i) => (
+                <button key={date} onClick={()=>setSelectedDay(i)} style={{ aspectRatio:'1', borderRadius:'50%', border:'none', background:selectedDay===i?C.grad:'transparent', color:selectedDay===i?'#fff':C.text, fontSize:13, fontWeight:selectedDay===i?700:400, cursor:'pointer', outline:i===3&&selectedDay!==3?'1px solid rgba(139,92,246,0.4)':'none', fontFamily:'DM Sans,sans-serif' }}>{date}</button>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <SectionLabel>{t('Time','時間')}</SectionLabel>
+          <div style={{ display:'flex', flexDirection:'column', gap:8 }}>
+            {times.map((tm,i) => (
+              <button key={i} onClick={()=>setTimeSlot(i)} style={{ padding:'11px 16px', borderRadius:12, textAlign:'left', background:timeSlot===i?'rgba(139,92,246,0.2)':'rgba(255,255,255,0.04)', border:timeSlot===i?'1px solid #8b5cf6':'1px solid #1f1f35', color:timeSlot===i?C.accentLight:C.textSub, fontSize:13, fontWeight:500, cursor:'pointer', fontFamily:'DM Sans,sans-serif' }}>{tm}</button>
+            ))}
+          </div>
+        </div>
+
+        <div>
+          <SectionLabel>{t('Location','地點')}</SectionLabel>
+          <div style={{ display:'flex', flexWrap:'wrap', gap:6 }}>
+            {LOC.map((l,i) => <Pill key={i} label={l} selected={locIdx===i} onToggle={()=>setLocIdx(i)}/>)}
+          </div>
+        </div>
+
+        <div>
+          <SectionLabel>{t('Notes (optional)','備注（選填）')}</SectionLabel>
+          <input value={notes} onChange={e=>setNotes(e.target.value)} placeholder={t('Any specific topics?','有特定學習內容嗎？')}
+            style={{ width:'100%', padding:'11px 14px', borderRadius:12, background:'rgba(255,255,255,0.05)', border:'1px solid #1f1f35', color:C.text, fontSize:13, outline:'none', fontFamily:'DM Sans,sans-serif' }}/>
+        </div>
+
+        {!confirmed ? (
+          <Btn label={t('Confirm Session ✓','確認預約 ✓')} onClick={()=>setConfirmed(true)}/>
+        ) : (
+          <div style={{ background:'rgba(34,197,94,0.1)', border:'1px solid rgba(34,197,94,0.3)', borderRadius:16, padding:'16px', textAlign:'center' }}>
+            <div style={{ fontSize:24, marginBottom:8 }}>🎉</div>
+            <div style={{ fontSize:15, fontWeight:700, color:C.green, marginBottom:4 }}>{t('Session Confirmed!','預約成功！')}</div>
+            <div style={{ fontSize:13, color:C.textSub, lineHeight:1.6 }}>
+              {lang==='en'
+                ? `${daysEn[selectedDay]} · ${timesEn[timeSlot]} · ${LOC_EN[locIdx].replace(/[^\w\s]/g,'').trim()} · with Emily`
+                : `${daysZh[selectedDay]}・${timesZh[timeSlot]}・${LOC_ZH[locIdx].replace(/[^\w一-龥]/g,'')}・與Emily`}
+            </div>
+          </div>
+        )}
+        <div style={{ height:8 }}/>
+      </div>
+
+      <BottomNav active="chat" onNav={onNav}/>
+    </div>
+  );
+}
+
+// ════════════════════════════════════════════════════════════════
+// SCREEN 9 — Profile
+// ════════════════════════════════════════════════════════════════
+function Screen9({ onNav, onSignOut }) {
+  const { t, lang } = useLang();
+  const [editing, setEditing] = useState(false);
+  const [name, setName] = useState('Emily Chan');
+  const [bio, setBio]   = useState(lang==='en'
+    ? 'S5 at DGS. Looking for serious Physics & Chem study buddies. DSE 2027 grind 💪'
+    : 'DGS S5。尋找認真的物理化學學習夥伴。文憑試2027 💪');
+
+  const stats = [
+    { n:'12', en:'Matches', zh:'配對' },
+    { n:'8',  en:'Sessions', zh:'學習' },
+    { n:'4.9',en:'Rating', zh:'評分' },
+  ];
+
+  const settings = [
+    { icon:'🔔', en:'Notifications', zh:'通知' },
+    { icon:'🛡️', en:'Privacy & Safety', zh:'私隱與安全' },
+    { icon:'🚩', en:'Report a Problem', zh:'回報問題' },
+    { icon:'❓', en:'Help & Support', zh:'幫助與支援' },
+    { icon:'📜', en:'Terms & Privacy', zh:'條款與私隱' },
+  ];
+
+  return (
+    <div style={{ height:'100%', display:'flex', flexDirection:'column' }}>
+      <div style={{ padding:'14px 22px 10px', borderBottom:'1px solid #1f1f35', display:'flex', alignItems:'center', justifyContent:'space-between' }}>
+        <div>
+          <div style={{ fontSize:20, fontWeight:700, color:C.text }}>{t('Profile','個人檔案')}</div>
+          <div style={{ fontSize:12, color:C.textSub, marginTop:2 }}>{t('Manage your account','管理你的帳戶')}</div>
+        </div>
+        <button onClick={()=>setEditing(e=>!e)} style={{ background:'rgba(139,92,246,0.15)', border:'1px solid rgba(139,92,246,0.3)', borderRadius:10, padding:'6px 12px', color:C.accentLight, fontSize:12, fontWeight:600, cursor:'pointer', fontFamily:'DM Sans,sans-serif' }}>
+          {editing ? t('Done','完成') : t('Edit','編輯')}
+        </button>
+      </div>
+
+      <div style={{ flex:1, overflowY:'auto', padding:'18px 22px 14px', display:'flex', flexDirection:'column', gap:18 }}>
+        <div style={{ display:'flex', flexDirection:'column', alignItems:'center', gap:10 }}>
+          <div style={{ width:84, height:84, borderRadius:'50%', background:C.grad, display:'flex', alignItems:'center', justifyContent:'center', fontSize:34, fontWeight:800, color:'#fff', boxShadow:'0 0 0 3px #09090f, 0 0 0 5px rgba(139,92,246,0.4), 0 8px 28px rgba(139,92,246,0.4)' }}>
+            {name.charAt(0)}
+          </div>
+          {editing ? (
+            <input value={name} onChange={e=>setName(e.target.value)} style={{ textAlign:'center', padding:'8px 12px', borderRadius:10, background:'rgba(255,255,255,0.05)', border:'1px solid #1f1f35', color:C.text, fontSize:18, fontWeight:700, outline:'none', fontFamily:'DM Sans,sans-serif', width:200 }}/>
+          ) : (
+            <div style={{ fontSize:20, fontWeight:700, color:C.text }}>{name}</div>
+          )}
+          <div style={{ display:'flex', alignItems:'center', gap:8 }}>
+            <span style={{ fontSize:12, color:C.textSub }}>S5 · DGS</span>
+            <span style={{ fontSize:10, color:C.green, background:'rgba(34,197,94,0.12)', border:'1px solid rgba(34,197,94,0.3)', padding:'2px 8px', borderRadius:10, fontWeight:700, letterSpacing:0.5 }}>✓ {t('VERIFIED','已驗證')}</span>
+          </div>
+        </div>
+
+        <div style={{ display:'flex', gap:8 }}>
+          {stats.map(s => (
+            <div key={s.en} style={{ flex:1, textAlign:'center', padding:'12px 6px', background:'rgba(255,255,255,0.03)', border:'1px solid #1f1f35', borderRadius:14 }}>
+              <div style={{ fontSize:20, fontWeight:800, background:C.grad, WebkitBackgroundClip:'text', WebkitTextFillColor:'transparent' }}>{s.n}</div>
+              <div style={{ fontSize:10, color:C.textMuted, marginTop:2, letterSpacing:0.5, textTransform:'uppercase' }}>{t(s.en, s.zh)}</div>
+            </div>
+          ))}
+        </div>
+
+        <GlassCard style={{ padding:'14px 16px' }}>
+          <div style={{ fontSize:11, fontWeight:700, color:C.accentLight, letterSpacing:1, textTransform:'uppercase', marginBottom:8 }}>{t('Bio','介紹')}</div>
+          {editing ? (
+            <textarea value={bio} onChange={e=>setBio(e.target.value.slice(0,160))} rows={3}
+              style={{ width:'100%', padding:'8px 10px', borderRadius:10, background:'rgba(255,255,255,0.05)', border:'1px solid #1f1f35', color:C.text, fontSize:13, outline:'none', resize:'none', fontFamily:'DM Sans,sans-serif', lineHeight:1.5 }}/>
+          ) : (
+            <div style={{ fontSize:13, color:C.text, lineHeight:1.55, fontStyle:'italic' }}>{bio}</div>
+          )}
+        </GlassCard>
+
+        <div>
+          <div style={{ fontSize:11, fontWeight:700, color:C.textMuted, letterSpacing:1, textTransform:'uppercase', marginBottom:8 }}>{t('Subjects','科目')}</div>
+          <div style={{ display:'flex', flexWrap:'wrap', gap:5 }}>
+            {['Physics','Chemistry','Maths','Economics'].map(s => <Tag key={s} label={s} color="purple"/>)}
+          </div>
+        </div>
+        <div>
+          <div style={{ fontSize:11, fontWeight:700, color:C.textMuted, letterSpacing:1, textTransform:'uppercase', marginBottom:8 }}>{t('Study Style','學習方式')}</div>
+          <div style={{ display:'flex', flexWrap:'wrap', gap:5 }}>
+            {['Active Recall','Past Papers','Pomodoro'].map(s => <Tag key={s} label={s} color="blue"/>)}
+          </div>
+        </div>
+        <div>
+          <div style={{ fontSize:11, fontWeight:700, color:C.textMuted, letterSpacing:1, textTransform:'uppercase', marginBottom:8 }}>{t('Availability','空閒時間')}</div>
+          <div style={{ display:'flex', flexWrap:'wrap', gap:5 }}>
+            {['Weekday evenings','Weekend afternoons'].map(a => <Tag key={a} label={a} color="grey"/>)}
+          </div>
+        </div>
+
+        <div style={{ display:'flex', flexDirection:'column', background:'rgba(255,255,255,0.03)', border:'1px solid #1f1f35', borderRadius:14, overflow:'hidden' }}>
+          {settings.map((s,i) => (
+            <button key={s.en} style={{ display:'flex', alignItems:'center', gap:12, padding:'13px 14px', background:'none', border:'none', borderTop:i===0?'none':'1px solid #1f1f35', cursor:'pointer', textAlign:'left', fontFamily:'DM Sans,sans-serif' }}>
+              <span style={{ fontSize:16 }}>{s.icon}</span>
+              <span style={{ fontSize:13, color:C.text, fontWeight:500, flex:1 }}>{t(s.en, s.zh)}</span>
+              <span style={{ color:C.textMuted, fontSize:16 }}>›</span>
+            </button>
+          ))}
+        </div>
+
+        <Btn label={t('Sign Out','登出')} onClick={onSignOut} outline={true}/>
+
+        <div style={{ textAlign:'center', fontSize:10, color:C.textMuted, paddingTop:4 }}>
+          StudyMatch v1.0 · {t('Made in HK','香港製造')} 🇭🇰
+        </div>
+      </div>
+
+      <BottomNav active="profile" onNav={onNav}/>
+    </div>
+  );
+}
+
+// ════════════════════════════════════════════════════════════════
+// PHONE SHELL
+// ════════════════════════════════════════════════════════════════
+function PhoneShell() {
+  const [lang, setLang] = useState('en');
+  const toggle = () => setLang(l => l==='en' ? 'zh' : 'en');
+
+  return (
+    <LangCtx.Provider value={{ lang, toggle }}>
+      <div className="phone-shell">
+        <div className="phone-notch"/>
+        <div className="status-bar">
+          <span>9:41</span>
+          <button onClick={toggle} style={{
+            background:'rgba(139,92,246,0.2)', border:'1px solid rgba(139,92,246,0.4)',
+            borderRadius:20, padding:'2px 10px', cursor:'pointer',
+            display:'flex', gap:0, overflow:'hidden',
+          }}>
+            {['en','zh'].map(l => (
+              <span key={l} style={{
+                padding:'1px 7px', borderRadius:16, fontSize:11, fontWeight:700,
+                background: lang===l ? C.grad : 'transparent',
+                color: lang===l ? '#fff' : 'rgba(232,232,255,0.45)',
+                transition:'all .2s',
+                fontFamily:'DM Sans,sans-serif',
+              }}>{l==='en'?'EN':'中文'}</span>
+            ))}
+          </button>
+          <span style={{ display:'flex', alignItems:'center', gap:5 }}>
+            <span style={{ display:'inline-flex', alignItems:'flex-end', gap:1.5, height:9 }}>
+              {[3,5,7,9].map(h => <span key={h} style={{ width:2.5, height:h, background:'rgba(232,232,255,0.85)', borderRadius:0.5 }}/>)}
+            </span>
+            <span style={{ fontSize:11 }}>📶</span>
+            <span style={{ display:'inline-block', width:22, height:11, border:'1px solid rgba(232,232,255,0.7)', borderRadius:3, position:'relative', padding:1 }}>
+              <span style={{ display:'block', width:'80%', height:'100%', background:'rgba(232,232,255,0.85)', borderRadius:1 }}/>
+              <span style={{ position:'absolute', right:-3, top:3, width:2, height:5, background:'rgba(232,232,255,0.7)', borderRadius:'0 1px 1px 0' }}/>
+            </span>
+          </span>
+        </div>
+        <div className="screen-area">
+          <AppInner lang={lang} toggle={toggle}/>
+        </div>
+        <div className="home-indicator"/>
+      </div>
+    </LangCtx.Provider>
+  );
+}
+
+function AppInner({ lang, toggle }) {
+  const [screen, setScreen] = useState('onboarding');
+  const [toast, setToast] = useState({ visible:false, msg:'' });
+  const [matches] = useState(CARDS.slice(0,2));
+
+  function showToast(msg) {
+    setToast({ visible:true, msg });
+    setTimeout(() => setToast({ visible:false, msg:'' }), 2500);
+  }
+
+  function handleNav(tab) {
+    setScreen({ browse:'browse', create:'create', chat:'chat', profile:'profile' }[tab] || screen);
+  }
+
+  function ScreenWrap({ children }) {
+    return <div style={{ position:'absolute', inset:0, animation:'fadeIn .25s ease' }}>{children}</div>;
+  }
+
+  return (
+    <div style={{ position:'relative', width:'100%', height:'100%', background:C.bg, overflow:'hidden' }}>
+      {screen==='onboarding' && <ScreenWrap><Screen1 onNext={()=>setScreen('setup')}/></ScreenWrap>}
+      {screen==='setup'      && <ScreenWrap><Screen2 onNext={()=>setScreen('home')}/></ScreenWrap>}
+      {screen==='home'       && <ScreenWrap><Screen3 onNav={handleNav} matches={matches}/></ScreenWrap>}
+      {screen==='browse'     && <ScreenWrap><Screen4 onNav={handleNav} onMatch={()=>setScreen('match')}/></ScreenWrap>}
+      {screen==='create'     && <ScreenWrap><Screen5 onNav={handleNav} onPost={()=>{ showToast(lang==='en'?'Card posted! 🎉':'已發佈！🎉'); setTimeout(()=>setScreen('home'),600); }}/></ScreenWrap>}
+      {screen==='match'      && <ScreenWrap><Screen6 onChat={()=>setScreen('chat')} onBrowse={()=>setScreen('browse')}/></ScreenWrap>}
+      {screen==='chat'       && <ScreenWrap><Screen7 onNav={handleNav} onSchedule={()=>setScreen('schedule')}/></ScreenWrap>}
+      {screen==='schedule'   && <ScreenWrap><Screen8 onNav={handleNav}/></ScreenWrap>}
+      {screen==='profile'    && <ScreenWrap><Screen9 onNav={handleNav} onSignOut={()=>{ showToast(lang==='en'?'Signed out 👋':'已登出 👋'); setTimeout(()=>setScreen('onboarding'),600); }}/></ScreenWrap>}
+      <Toast msg={toast.msg} visible={toast.visible}/>
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<PhoneShell/>);
+</script>
+</body>
+</html>
