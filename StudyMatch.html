@@ -126,21 +126,154 @@ const CARDS = [
     bio:'"Physics is hard but we can figure it out together 💪"',
     bioZh:'"物理很難，但我們可以一起攻克它 💪"',
     subjects:['Physics','Chemistry','Maths'],
+    topics:{ Physics:['C2','C5'], Chemistry:['C2','C8'], Maths:['C1','M2'] },
     styles:['Active Recall','Past Papers'], avail:['Weekday evenings'], match:92 },
   { id:2, name:'Marcus Lam', year:'S6', district:'Sha Tin',
     bio:'"Past papers every day. Let\'s grind together 📝"',
     bioZh:'"每天做卷。一起努力吧 📝"',
     subjects:['Maths','Economics','BAFS'],
+    topics:{ Maths:['C4','M1'], Economics:['C3','C7','C9'], BAFS:['C1','B1'] },
     styles:['Past Papers','Pomodoro'], avail:['Weekend mornings'], match:78 },
   { id:3, name:'Sophie Wong', year:'S5', district:'Causeway Bay',
     bio:'"Looking for someone serious about English & History"',
     bioZh:'"尋找認真學習英文和歷史的人"',
     subjects:['English','History','Geography'],
+    topics:{ English:['P1','P3'], History:['C2','E1'], Geography:['C1','C5','C7'] },
     styles:['Group Discussion','Note-taking'], avail:['Weekday evenings','Weekend afternoons'], match:64 },
 ];
 
-const SUBJECTS_EN = ['Physics','Chemistry','Biology','Maths','Economics','History','Geography','English','Chinese','Liberal Studies','BAFS','ICT'];
-const SUBJECTS_ZH = ['物理','化學','生物','數學','經濟','歷史','地理','英文','中文','通識','企業財管','資訊科技'];
+const SUBJECTS_EN = ['Physics','Chemistry','Biology','Maths','Economics','History','Chinese History','Geography','English','Chinese','Citizenship & Social Dev','BAFS','ICT'];
+const SUBJECTS_ZH = ['物理','化學','生物','數學','經濟','歷史','中國歷史','地理','英文','中文','公社科','企業財管','資訊科技'];
+
+// HKDSE topic breakdowns per subject. Codes use C# for compulsory and E# for elective.
+const SUBJECT_TOPICS = {
+  Physics: [
+    { code:'C1', en:'Heat and Gases',                             zh:'熱與氣體' },
+    { code:'C2', en:'Force and Motion',                           zh:'力與運動' },
+    { code:'C3', en:'Wave Motion',                                zh:'波動' },
+    { code:'C4', en:'Electricity and Magnetism',                  zh:'電與磁' },
+    { code:'C5', en:'Radioactivity and Nuclear Energy',           zh:'放射現象和核能' },
+    { code:'E1', en:'Astronomy and Space Science',                zh:'天文學與太空科學' },
+    { code:'E2', en:'Atomic World',                               zh:'原子世界' },
+    { code:'E3', en:'Energy and Use of Energy',                   zh:'能源與能源利用' },
+    { code:'E4', en:'Medical Physics',                            zh:'醫學物理' },
+  ],
+  Chemistry: [
+    { code:'C1',  en:'Planet Earth',                              zh:'地球' },
+    { code:'C2',  en:'Microscopic World I & II',                  zh:'微觀世界 I 及 II' },
+    { code:'C3',  en:'Metals',                                    zh:'金屬' },
+    { code:'C4',  en:'Acids and Bases',                           zh:'酸與鹼' },
+    { code:'C5',  en:'Fossil Fuels and Carbon Compounds',         zh:'化石燃料與碳化合物' },
+    { code:'C6',  en:'Redox Reactions, Chemical Cells & Electrolysis', zh:'氧化還原反應、化學電池與電解' },
+    { code:'C7',  en:'Chemical Reactions and Energy',             zh:'化學反應與能量' },
+    { code:'C8',  en:'Rate of Reaction',                          zh:'反應速率' },
+    { code:'C9',  en:'Chemical Equilibrium',                      zh:'化學平衡' },
+    { code:'C10', en:'Chemistry of Carbon Compounds',             zh:'碳化合物化學' },
+    { code:'C11', en:'Patterns in the Chemical World',            zh:'化學世界的模式' },
+    { code:'E1',  en:'Industrial Chemistry',                      zh:'工業化學' },
+    { code:'E2',  en:'Materials Chemistry',                       zh:'材料化學' },
+    { code:'E3',  en:'Analytical Chemistry',                      zh:'分析化學' },
+  ],
+  Biology: [
+    { code:'C1', en:'Cells and Molecules of Life',                zh:'細胞與生命分子' },
+    { code:'C2', en:'Genetics and Evolution',                     zh:'遺傳與進化' },
+    { code:'C3', en:'Organisms and Environment',                  zh:'生物與環境' },
+    { code:'C4', en:'Health and Diseases',                        zh:'健康與疾病' },
+    { code:'E1', en:'Human Physiology: Regulation and Control',   zh:'人體生理：調控與控制' },
+    { code:'E2', en:'Applied Ecology',                            zh:'應用生態學' },
+    { code:'E3', en:'Microorganisms and Humans',                  zh:'微生物與人類' },
+    { code:'E4', en:'Biotechnology',                              zh:'生物科技' },
+  ],
+  Maths: [
+    { code:'C1', en:'Number & Algebra',                                              zh:'數與代數' },
+    { code:'C2', en:'Measures, Shape & Space',                                       zh:'度量、形狀與空間' },
+    { code:'C3', en:'Data Handling',                                                 zh:'數據處理' },
+    { code:'C4', en:'Further Topics (Equations, Functions, Statistics, Probability)',zh:'進階課題（方程、函數、統計、概率）' },
+    { code:'M1', en:'Module 1 — Calculus and Statistics',                            zh:'單元一：微積分與統計' },
+    { code:'M2', en:'Module 2 — Algebra and Calculus',                               zh:'單元二：代數與微積分' },
+  ],
+  Economics: [
+    { code:'C1',  en:'Basic Economic Concepts',                                      zh:'基本經濟概念' },
+    { code:'C2',  en:'Firms and Production',                                         zh:'企業與生產' },
+    { code:'C3',  en:'Market and Price',                                             zh:'市場與價格' },
+    { code:'C4',  en:'Competition and Market Structure',                             zh:'競爭與市場結構' },
+    { code:'C5',  en:'Efficiency, Equity and the Role of Government',                zh:'效率、公平與政府角色' },
+    { code:'C6',  en:'Measurement of Economic Performance',                          zh:'量度經濟表現' },
+    { code:'C7',  en:'National Income Determination and Price Level',                zh:'國民收入決定及物價水平' },
+    { code:'C8',  en:'Money and Banking',                                            zh:'貨幣與銀行' },
+    { code:'C9',  en:'Macroeconomic Problems and Policies',                          zh:'宏觀經濟問題和政策' },
+    { code:'C10', en:'International Trade and Finance',                              zh:'國際貿易和金融' },
+    { code:'E1',  en:'Monopoly Pricing, Anti-competitive Behaviours & Competition Policy', zh:'壟斷定價、反競爭行為及競爭政策' },
+    { code:'E2',  en:'Extension of Trade Theory, Economic Growth and Development',   zh:'貿易理論的延伸、經濟增長及發展' },
+  ],
+  History: [
+    { code:'C1', en:'Introduction: The Making of the Modern World',                  zh:'引言：現代世界的形成' },
+    { code:'C2', en:'Theme A: Modernisation & Transformation in 20th-Century Asia',  zh:'主題甲：二十世紀亞洲的現代化與蛻變' },
+    { code:'C3', en:'Theme B: Conflicts and Cooperation in the 20th-Century World',  zh:'主題乙：二十世紀世界的衝突與合作' },
+    { code:'E1', en:'Comparative Studies',                                           zh:'比較研究' },
+    { code:'E2', en:'Issue-based Studies',                                           zh:'議題為本研究' },
+    { code:'E3', en:'Local Heritage Studies',                                        zh:'本地文化遺產研究' },
+  ],
+  'Chinese History': [
+    { code:'C1', en:'Political Evolution of Successive Dynasties',                   zh:'歷代政治演變' },
+    { code:'C2', en:'Cultural History',                                              zh:'文化史' },
+    { code:'E1', en:'Development of Traditional Chinese Culture in the 20th Century',zh:'二十世紀中國傳統文化發展' },
+    { code:'E2', en:'Regional Development and Utilization of Resources',             zh:'地域與資源運用' },
+    { code:'E3', en:'The Era and Intellectuals',                                     zh:'時代與知識分子' },
+    { code:'E4', en:'Institutions and Political Evolution',                          zh:'制度與政治演變' },
+    { code:'E5', en:'Religion and Social Life',                                      zh:'宗教與社會生活' },
+  ],
+  Geography: [
+    { code:'C1', en:'Opportunities and Risks',                                       zh:'機會與風險' },
+    { code:'C2', en:'Managing River and Coastal Environments',                       zh:'管理河流及海岸環境' },
+    { code:'C3', en:'Changing Industrial Location',                                  zh:'轉變中的工業區位' },
+    { code:'C4', en:'Building a Sustainable City',                                   zh:'建設一個可持續發展的城市' },
+    { code:'C5', en:'Combating Famine',                                              zh:'對抗饑荒' },
+    { code:'C6', en:'Disappearing Green Canopy',                                     zh:'消失中綠色樹冠' },
+    { code:'C7', en:'Global Warming / Climate Change',                               zh:'全球暖化 / 氣候變化' },
+    { code:'E1', en:'Dynamic Earth (Building of Hong Kong)',                         zh:'動態的地球（香港地質與地貌的塑造）' },
+    { code:'E2', en:'Weather and Climate',                                           zh:'天氣與氣候' },
+    { code:'E3', en:'Transport Development, Planning and Management',                zh:'運輸發展、規劃與管理' },
+    { code:'E4', en:'Regional Study of the Pearl River Delta',                       zh:'珠江三角洲區域研習' },
+  ],
+  English: [
+    { code:'P1', en:'Reading & Writing',                                             zh:'閱讀及寫作' },
+    { code:'P2', en:'Listening & Integrated Skills',                                 zh:'聆聽及綜合能力' },
+    { code:'P3', en:'Speaking',                                                      zh:'說話' },
+    { code:'P4', en:'Elective Modules (Debating, Social Issues, Workplace English)', zh:'選修單元（辯論、社會議題、工作場所英語）' },
+    { code:'P5', en:'School-based Assessment (SBA)',                                 zh:'校本評核' },
+  ],
+  Chinese: [
+    { code:'P1', en:'Reading',                                                       zh:'閱讀' },
+    { code:'P2', en:'Writing',                                                       zh:'寫作' },
+    { code:'P3', en:'Listening & Integrated Skills',                                 zh:'聆聽及綜合能力' },
+    { code:'P4', en:'Speaking (Individual & Group)',                                 zh:'說話（個人及小組）' },
+    { code:'P5', en:'School-based Assessment (SBA)',                                 zh:'校本評核' },
+  ],
+  'Citizenship & Social Dev': [
+    { code:'T1', en:'Hong Kong under "One Country, Two Systems"',                    zh:'「一國兩制」下的香港' },
+    { code:'T2', en:'Our Country since Reform and Opening-up',                       zh:'改革開放以來的國家' },
+    { code:'T3', en:'Interconnectedness & Interdependence of the Contemporary World',zh:'當代世界的互聯與互相依存' },
+  ],
+  BAFS: [
+    { code:'C1', en:'Business Environment',                                          zh:'商業環境' },
+    { code:'C2', en:'Personal Financial Management',                                 zh:'個人理財管理' },
+    { code:'A1', en:'Accounting Strand',                                             zh:'會計模塊' },
+    { code:'B1', en:'Business Management Strand',                                    zh:'商業管理模塊' },
+    { code:'E1', en:'Marketing Management',                                          zh:'市場營銷管理' },
+  ],
+  ICT: [
+    { code:'C1', en:'Information Processing',                                        zh:'資訊處理' },
+    { code:'C2', en:'Computer System Fundamentals',                                  zh:'電腦系統基礎' },
+    { code:'C3', en:'Internet and its Applications',                                 zh:'互聯網及其應用' },
+    { code:'C4', en:'Computational Thinking and Programming',                        zh:'運算思維與編程' },
+    { code:'C5', en:'Social Implications',                                           zh:'社會影響' },
+    { code:'E1', en:'Databases',                                                     zh:'數據庫' },
+    { code:'E2', en:'Web Application Development',                                   zh:'網頁應用程式開發' },
+    { code:'E3', en:'Algorithm and Programming',                                     zh:'算法與編程' },
+  ],
+};
+const SUBJECT_KEYS = ['Physics','Chemistry','Biology','Maths','Economics','History','Chinese History','Geography','English','Chinese','Citizenship & Social Dev','BAFS','ICT'];
 const STYLES_EN   = ['Active Recall','Past Papers','Group Discussion','Note-taking','Mind Maps','Pomodoro'];
 const STYLES_ZH   = ['主動回憶','做試卷','小組討論','筆記','思維導圖','番茄鐘'];
 const AVAIL_EN    = ['Weekday mornings','Weekday evenings','Weekend mornings','Weekend afternoons'];
@@ -198,6 +331,7 @@ function BottomNav({ active, onNav }) {
   const tabs = [
     { id:'browse', icon:'🔍', en:'Browse', zh:'配對' },
     { id:'create', icon:'➕', en:'Create', zh:'發佈' },
+    { id:'focus',  icon:'🍅', en:'Focus',  zh:'專注' },
     { id:'chat',   icon:'💬', en:'Chat',   zh:'訊息' },
     { id:'profile',icon:'👤', en:'Profile',zh:'我' },
   ];
@@ -310,11 +444,11 @@ function Screen2({ onNext }) {
       <div style={{ flex:1, overflowY:'auto', padding:'16px 22px', display:'flex', flexDirection:'column', gap:18 }}>
         <div>
           <SectionLabel>{t('Display Name','暱稱')}</SectionLabel>
-          <input value={name} onChange={e=>setName(e.target.value)} placeholder={t('e.g. Emily C.','例如：Emily C.')} style={inputStyle}/>
+          <input value={name} onChange={e=>setName(e.target.value)} placeholder={t('e.g. Ethan L.','例如：Ethan L.')} style={inputStyle}/>
         </div>
         <div>
           <SectionLabel>{t('School','學校')}</SectionLabel>
-          <input value={school} onChange={e=>setSchool(e.target.value)} placeholder={t("e.g. Diocesan Girls' School",'例如：拔萃女書院')} style={inputStyle}/>
+          <input value={school} onChange={e=>setSchool(e.target.value)} placeholder={t('e.g. Ying Wa College','例如：英華書院')} style={inputStyle}/>
         </div>
         <div>
           <SectionLabel>{t('Year Level','年級')}</SectionLabel>
@@ -358,7 +492,7 @@ function Screen3({ onNav, matches }) {
   return (
     <div style={{ height:'100%', display:'flex', flexDirection:'column' }}>
       <div style={{ padding:'16px 22px 12px' }}>
-        <div style={{ fontSize:22, fontWeight:700, color:C.text }}>{t('Good evening, Emily 👋','晚上好，Emily 👋')}</div>
+        <div style={{ fontSize:22, fontWeight:700, color:C.text }}>{t('Good evening, Ethan 👋','晚上好，Ethan 👋')}</div>
         <div style={{ fontSize:13, color:C.textSub, marginTop:2 }}>{t("What do you want to do today?",'你今天想做什麼？')}</div>
       </div>
 
@@ -417,10 +551,36 @@ function Screen3({ onNav, matches }) {
 // ════════════════════════════════════════════════════════════════
 function Screen4({ onNav, onMatch }) {
   const { t, lang } = useLang();
-  const [deck, setDeck] = useState([...CARDS]);
+  const [seenIds, setSeenIds] = useState([]);
   const [drag, setDrag] = useState({ x:0, y:0, dragging:false });
   const [leaving, setLeaving] = useState(null);
+  const [filterOpen, setFilterOpen] = useState(false);
+  const [filterTopics, setFilterTopics] = useState({}); // { Geography: ['C5','C7'] }
   const startRef = useRef(null);
+
+  const activeCount = Object.values(filterTopics).reduce((n, arr) => n + (arr ? arr.length : 0), 0);
+
+  function cardMatchesFilter(card) {
+    if (activeCount === 0) return true;
+    if (!card.topics) return false;
+    return Object.entries(filterTopics).some(([subj, codes]) => {
+      if (!codes || codes.length === 0) return false;
+      const ct = card.topics[subj] || [];
+      return ct.some(c => codes.includes(c));
+    });
+  }
+
+  const visibleDeck = CARDS.filter(card => !seenIds.includes(card.id) && cardMatchesFilter(card));
+
+  function toggleFilterTopic(subj, code) {
+    setFilterTopics(prev => {
+      const list = prev[subj] || [];
+      const next = list.includes(code) ? list.filter(c => c !== code) : [...list, code];
+      return { ...prev, [subj]: next };
+    });
+  }
+
+  function clearFilters() { setFilterTopics({}); }
 
   function handlePointerDown(e) {
     startRef.current = { x:e.clientX, y:e.clientY, axis:null, id:e.pointerId };
@@ -453,10 +613,12 @@ function Screen4({ onNav, onMatch }) {
     startRef.current = null;
   }
   function swipe(dir) {
+    const top = visibleDeck[0];
+    if (!top) return;
     setLeaving(dir);
     setTimeout(() => {
-      if (dir==='right' && deck[0]?.id===1) { onMatch(); return; }
-      setDeck(d => d.slice(1));
+      if (dir==='right' && top.id===1) { onMatch(); return; }
+      setSeenIds(prev => [...prev, top.id]);
       setLeaving(null);
       setDrag({ x:0, y:0, dragging:false });
     }, 350);
@@ -473,20 +635,30 @@ function Screen4({ onNav, onMatch }) {
           <div style={{ fontSize:20, fontWeight:700, color:C.text }}>{t('Browse','配對')}</div>
           <div style={{ fontSize:12, color:C.textSub }}>{t('12 students near you','附近12位同學')}</div>
         </div>
-        <button style={{ background:'rgba(255,255,255,0.05)', border:'1px solid #1f1f35', borderRadius:10, padding:'7px 12px', color:C.textSub, fontSize:12, cursor:'pointer', fontFamily:'DM Sans,sans-serif' }}>⚙️ {t('Filter','篩選')}</button>
+        <button onClick={()=>setFilterOpen(true)} style={{ position:'relative', background: activeCount>0?'rgba(139,92,246,0.18)':'rgba(255,255,255,0.05)', border: activeCount>0?'1px solid rgba(139,92,246,0.4)':'1px solid #1f1f35', borderRadius:10, padding:'7px 12px', color: activeCount>0?C.accentLight:C.textSub, fontSize:12, cursor:'pointer', fontFamily:'DM Sans,sans-serif', fontWeight:600 }}>
+          ⚙️ {t('Filter','篩選')}
+          {activeCount>0 && (
+            <span style={{ position:'absolute', top:-6, right:-6, minWidth:18, height:18, borderRadius:9, background:C.grad, color:'#fff', fontSize:10, fontWeight:800, display:'flex', alignItems:'center', justifyContent:'center', padding:'0 5px', boxShadow:'0 2px 6px rgba(139,92,246,0.5)' }}>{activeCount}</span>
+          )}
+        </button>
       </div>
 
       <div style={{ flex:1, position:'relative', overflow:'hidden', padding:'0 22px' }}
         onPointerMove={handlePointerMove} onPointerUp={handlePointerUp} onPointerLeave={handlePointerUp}>
-        {deck.length===0 && (
-          <div style={{ height:'100%', display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', gap:12 }}>
-            <div style={{ fontSize:40 }}>🎉</div>
-            <div style={{ fontSize:16, fontWeight:700, color:C.text }}>{t("You've seen everyone!",'你已看完所有人！')}</div>
-            <div style={{ fontSize:13, color:C.textSub }}>{t('Check back tomorrow','明天再看看')}</div>
+        {visibleDeck.length===0 && (
+          <div style={{ height:'100%', display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', gap:12, padding:'0 20px', textAlign:'center' }}>
+            <div style={{ fontSize:40 }}>{activeCount>0 ? '🎯' : '🎉'}</div>
+            <div style={{ fontSize:16, fontWeight:700, color:C.text }}>
+              {activeCount>0 ? t('No partners match these topics','沒有匹配這些課題的夥伴') : t("You've seen everyone!",'你已看完所有人！')}
+            </div>
+            <div style={{ fontSize:13, color:C.textSub }}>
+              {activeCount>0 ? t('Try fewer filters or check back later','嘗試減少篩選或稍後再來') : t('Check back tomorrow','明天再看看')}
+            </div>
+            {activeCount>0 && <button onClick={clearFilters} style={{ marginTop:8, background:'rgba(139,92,246,0.18)', border:'1px solid rgba(139,92,246,0.4)', borderRadius:10, padding:'9px 18px', color:C.accentLight, fontSize:13, fontWeight:600, cursor:'pointer', fontFamily:'DM Sans,sans-serif' }}>{t('Clear filters','清除篩選')}</button>}
           </div>
         )}
 
-        {deck.slice(0,3).map((card, i) => {
+        {visibleDeck.slice(0,3).map((card, i) => {
           const isTop = i===0;
           const scale = 1 - i*0.04;
           const tx = isTop ? drag.x : 0;
@@ -520,9 +692,30 @@ function Screen4({ onNav, onMatch }) {
                   {lang==='en' ? card.bio : card.bioZh}
                 </div>
                 <div style={{ marginBottom:10 }}>
-                  <div style={{ fontSize:10, fontWeight:700, color:C.textMuted, letterSpacing:0.8, textTransform:'uppercase', marginBottom:6 }}>{t('Subjects','科目')}</div>
-                  <div style={{ display:'flex', flexWrap:'wrap', gap:5 }}>
-                    {card.subjects.map(s => <Tag key={s} label={s} color="purple"/>)}
+                  <div style={{ fontSize:10, fontWeight:700, color:C.textMuted, letterSpacing:0.8, textTransform:'uppercase', marginBottom:6 }}>{t('Subjects & Topics','科目與課題')}</div>
+                  <div style={{ display:'flex', flexDirection:'column', gap:5 }}>
+                    {card.subjects.map(s => {
+                      const tList = (card.topics && card.topics[s]) || [];
+                      const matchedSet = new Set(filterTopics[s] || []);
+                      return (
+                        <div key={s} style={{ display:'flex', alignItems:'center', gap:6, flexWrap:'wrap' }}>
+                          <span style={{ display:'inline-block', padding:'3px 10px', borderRadius:20, background:'rgba(139,92,246,0.2)', color:'#c084fc', fontSize:10, fontWeight:600, border:'1px solid rgba(139,92,246,0.3)' }}>{s}</span>
+                          {tList.map(code => {
+                            const hit = matchedSet.has(code);
+                            return (
+                              <span key={code} style={{
+                                display:'inline-block', padding:'2px 7px', borderRadius:6,
+                                background: hit ? C.grad : 'rgba(255,255,255,0.05)',
+                                color: hit ? '#fff' : C.textSub,
+                                fontSize:9, fontWeight:800, letterSpacing:0.4,
+                                border: hit ? 'none' : '1px solid #1f1f35',
+                                boxShadow: hit ? '0 2px 8px rgba(139,92,246,0.4)' : 'none',
+                              }}>{code}</span>
+                            );
+                          })}
+                        </div>
+                      );
+                    })}
                   </div>
                 </div>
                 <div style={{ marginBottom:10 }}>
@@ -549,6 +742,117 @@ function Screen4({ onNav, onMatch }) {
       </div>
 
       <BottomNav active="browse" onNav={onNav}/>
+
+      {filterOpen && (
+        <FilterSheet
+          filterTopics={filterTopics}
+          onToggle={toggleFilterTopic}
+          onClear={clearFilters}
+          onClose={()=>setFilterOpen(false)}
+          activeCount={activeCount}
+        />
+      )}
+    </div>
+  );
+}
+
+// ════════════════════════════════════════════════════════════════
+// FilterSheet — slide-up panel for picking topics across subjects
+// ════════════════════════════════════════════════════════════════
+function FilterSheet({ filterTopics, onToggle, onClear, onClose, activeCount }) {
+  const { t, lang } = useLang();
+  const subjectsWithTopics = SUBJECT_KEYS.filter(k => SUBJECT_TOPICS[k] && SUBJECT_TOPICS[k].length > 0);
+  const [openSubj, setOpenSubj] = useState(null);
+
+  return (
+    <div style={{ position:'absolute', inset:0, zIndex:120, display:'flex', flexDirection:'column' }}>
+      <div onClick={onClose} style={{ flex:1, background:'rgba(0,0,0,0.55)', backdropFilter:'blur(4px)', animation:'fadeIn .25s ease' }}/>
+      <div style={{
+        position:'relative', background:'#0d0d18',
+        borderTopLeftRadius:24, borderTopRightRadius:24,
+        borderTop:'1px solid #1f1f35',
+        boxShadow:'0 -10px 40px rgba(0,0,0,0.6)',
+        maxHeight:'82%', display:'flex', flexDirection:'column',
+        animation:'fadeIn .3s ease',
+      }}>
+        <div style={{ padding:'10px 22px 0', display:'flex', justifyContent:'center' }}>
+          <div style={{ width:42, height:4, borderRadius:2, background:'#1f1f35' }}/>
+        </div>
+
+        <div style={{ padding:'14px 22px 8px', display:'flex', alignItems:'center', justifyContent:'space-between', borderBottom:'1px solid #1f1f35' }}>
+          <div>
+            <div style={{ fontSize:18, fontWeight:700, color:C.text }}>{t('Filter by Topic','按課題篩選')}</div>
+            <div style={{ fontSize:12, color:C.textSub, marginTop:2 }}>
+              {activeCount > 0
+                ? t(`${activeCount} topic${activeCount===1?'':'s'} selected`, `已選 ${activeCount} 個課題`)
+                : t('Pick the topics you want help with','選擇你想要幫助的課題')}
+            </div>
+          </div>
+          <button onClick={onClose} style={{ background:'rgba(255,255,255,0.06)', border:'1px solid #1f1f35', borderRadius:'50%', width:32, height:32, color:C.text, fontSize:16, cursor:'pointer' }}>×</button>
+        </div>
+
+        <div style={{ flex:1, overflowY:'auto', padding:'12px 22px 16px' }}>
+          <div style={{ display:'flex', flexDirection:'column', gap:8 }}>
+            {subjectsWithTopics.map(subjKey => {
+              const subjLabelZh = SUBJECTS_ZH[SUBJECT_KEYS.indexOf(subjKey)];
+              const list = SUBJECT_TOPICS[subjKey];
+              const sel = filterTopics[subjKey] || [];
+              const isOpen = openSubj === subjKey;
+              return (
+                <div key={subjKey} style={{ background:'rgba(255,255,255,0.03)', border:'1px solid #1f1f35', borderRadius:14, overflow:'hidden' }}>
+                  <button onClick={()=>setOpenSubj(isOpen ? null : subjKey)} style={{ display:'flex', alignItems:'center', gap:10, padding:'12px 14px', background:'none', border:'none', cursor:'pointer', width:'100%', textAlign:'left', fontFamily:'DM Sans,sans-serif' }}>
+                    <span style={{ fontSize:13, fontWeight:600, color:C.text, flex:1 }}>{lang==='en' ? subjKey : subjLabelZh}</span>
+                    {sel.length > 0 && <span style={{ fontSize:10, fontWeight:800, color:'#fff', background:C.grad, padding:'2px 8px', borderRadius:10 }}>{sel.length}</span>}
+                    <span style={{ color:C.textMuted, fontSize:14, transform:isOpen?'rotate(90deg)':'none', transition:'transform .2s' }}>›</span>
+                  </button>
+                  {isOpen && (
+                    <div style={{ padding:'4px 12px 12px', display:'flex', flexDirection:'column', gap:5, borderTop:'1px solid #1f1f35' }}>
+                      {list.map(top => {
+                        const isSel = sel.includes(top.code);
+                        return (
+                          <button key={top.code} onClick={()=>onToggle(subjKey, top.code)} style={{
+                            display:'flex', alignItems:'center', gap:10, padding:'8px 10px',
+                            borderRadius:10, textAlign:'left',
+                            border: isSel ? '1px solid #8b5cf6' : '1px solid #1f1f35',
+                            background: isSel ? 'rgba(139,92,246,0.18)' : 'rgba(255,255,255,0.03)',
+                            cursor:'pointer', fontFamily:'DM Sans,sans-serif',
+                          }}>
+                            <span style={{
+                              flexShrink:0, minWidth:30, padding:'2px 6px', borderRadius:6,
+                              fontSize:10, fontWeight:800, letterSpacing:0.5, textAlign:'center',
+                              background: isSel ? C.grad : 'rgba(255,255,255,0.06)',
+                              color: isSel ? '#fff' : C.textSub,
+                            }}>{top.code}</span>
+                            <span style={{ fontSize:12, color: isSel ? C.text : C.textSub, fontWeight:isSel?600:500, flex:1 }}>
+                              {lang==='en' ? top.en : top.zh}
+                            </span>
+                            {isSel && <span style={{ fontSize:11, color:C.accentLight }}>✓</span>}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+        <div style={{ padding:'10px 22px 14px', display:'flex', gap:10, borderTop:'1px solid #1f1f35' }}>
+          <button onClick={onClear} disabled={activeCount===0} style={{
+            flex:1, padding:'12px', borderRadius:12, fontSize:13, fontWeight:600,
+            background:'transparent', border:'1px solid #1f1f35',
+            color: activeCount===0 ? C.textMuted : C.textSub,
+            cursor: activeCount===0 ? 'not-allowed' : 'pointer',
+            fontFamily:'DM Sans,sans-serif',
+          }}>{t('Clear all','全部清除')}</button>
+          <button onClick={onClose} style={{
+            flex:2, padding:'12px', borderRadius:12, fontSize:13, fontWeight:700,
+            background:C.grad, border:'none', color:'#fff',
+            cursor:'pointer', fontFamily:'DM Sans,sans-serif', letterSpacing:0.3,
+          }}>{t('Show results','查看結果')}</button>
+        </div>
+      </div>
     </div>
   );
 }
@@ -563,14 +867,28 @@ function Screen5({ onNav, onPost }) {
   const [styles, setStyles] = useState([0]);
   const [avail, setAvail] = useState([1]);
   const [locIdx, setLocIdx] = useState(0);
+  const [topics, setTopics] = useState({}); // { [subjectKey]: Set<code> }
 
   function toggle(arr, setArr, idx) {
     setArr(arr.includes(idx) ? arr.filter(x=>x!==idx) : [...arr, idx]);
   }
 
+  function toggleTopic(subjKey, code) {
+    setTopics(prev => {
+      const next = { ...prev };
+      const set = new Set(next[subjKey] || []);
+      if (set.has(code)) set.delete(code); else set.add(code);
+      next[subjKey] = set;
+      return next;
+    });
+  }
+
   const SUBJECTS = lang==='en' ? SUBJECTS_EN : SUBJECTS_ZH;
   const STYLES   = lang==='en' ? STYLES_EN   : STYLES_ZH;
   const LOC      = lang==='en' ? LOC_EN      : LOC_ZH;
+
+  const selectedSubjectKeys = subjects.map(i => SUBJECT_KEYS[i]);
+  const subjectsWithTopics  = selectedSubjectKeys.filter(k => SUBJECT_TOPICS[k] && SUBJECT_TOPICS[k].length > 0);
 
   return (
     <div style={{ height:'100%', display:'flex', flexDirection:'column' }}>
@@ -608,6 +926,54 @@ function Screen5({ onNav, onPost }) {
             {SUBJECTS.map((s,i) => <Pill key={i} label={s} selected={subjects.includes(i)} onToggle={()=>toggle(subjects,setSubjects,i)}/>)}
           </div>
         </div>
+
+        {subjectsWithTopics.map(subjKey => {
+          const subjLabelEn = subjKey;
+          const subjLabelZh = SUBJECTS_ZH[SUBJECT_KEYS.indexOf(subjKey)];
+          const list = SUBJECT_TOPICS[subjKey];
+          const sel  = topics[subjKey] || new Set();
+          return (
+            <div key={subjKey} style={{ background:'rgba(139,92,246,0.06)', border:'1px solid rgba(139,92,246,0.18)', borderRadius:16, padding:'14px 14px 12px' }}>
+              <div style={{ display:'flex', alignItems:'baseline', justifyContent:'space-between', marginBottom:10 }}>
+                <div>
+                  <div style={{ fontSize:11, fontWeight:700, color:C.accentLight, letterSpacing:1, textTransform:'uppercase' }}>
+                    {t(`${subjLabelEn} Topics`, `${subjLabelZh} 課題`)}
+                  </div>
+                  <div style={{ fontSize:11, color:C.textSub, marginTop:2 }}>{t('Pick the topics you need help on','選擇你需要幫助的課題')}</div>
+                </div>
+                {sel.size > 0 && (
+                  <span style={{ fontSize:10, color:C.accentLight, fontWeight:700, background:'rgba(139,92,246,0.18)', padding:'2px 8px', borderRadius:10 }}>{sel.size}</span>
+                )}
+              </div>
+              <div style={{ display:'flex', flexDirection:'column', gap:5 }}>
+                {list.map(top => {
+                  const isSel = sel.has(top.code);
+                  return (
+                    <button key={top.code} onClick={()=>toggleTopic(subjKey, top.code)} style={{
+                      display:'flex', alignItems:'center', gap:10, padding:'8px 10px',
+                      borderRadius:10, textAlign:'left',
+                      border: isSel ? '1px solid #8b5cf6' : '1px solid #1f1f35',
+                      background: isSel ? 'rgba(139,92,246,0.18)' : 'rgba(255,255,255,0.03)',
+                      cursor:'pointer', fontFamily:'DM Sans,sans-serif',
+                    }}>
+                      <span style={{
+                        flexShrink:0, minWidth:28, padding:'2px 6px', borderRadius:6,
+                        fontSize:10, fontWeight:800, letterSpacing:0.5, textAlign:'center',
+                        background: isSel ? C.grad : 'rgba(255,255,255,0.06)',
+                        color: isSel ? '#fff' : C.textSub,
+                      }}>{top.code}</span>
+                      <span style={{ fontSize:12, color: isSel ? C.text : C.textSub, fontWeight:isSel?600:500, flex:1 }}>
+                        {lang==='en' ? top.en : top.zh}
+                      </span>
+                      {isSel && <span style={{ fontSize:11, color:C.accentLight }}>✓</span>}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          );
+        })}
+
         <div>
           <SectionLabel>{t('Study Style','學習方式')}</SectionLabel>
           <div style={{ display:'flex', flexWrap:'wrap', gap:6 }}>
@@ -656,7 +1022,7 @@ function Screen6({ onChat, onBrowse }) {
         <div style={{ fontSize:28, fontWeight:800, color:'#fff', marginBottom:4 }}>{t("It's a Match!",'配對成功！')}</div>
 
         <div style={{ display:'flex', alignItems:'center', justifyContent:'center', gap:12, margin:'24px 0 20px' }}>
-          {['Y','E'].map((l,i) => (
+          {['E','E'].map((l,i) => (
             <div key={i} style={{ width:56, height:56, borderRadius:'50%', background:i===0?'linear-gradient(135deg,#3b82f6,#1d4ed8)':C.grad, display:'flex', alignItems:'center', justifyContent:'center', fontSize:22, fontWeight:700, color:'#fff', boxShadow:`0 0 0 3px #09090f, 0 0 0 5px ${i===0?'#3b82f6':'#8b5cf6'}` }}>{l}</div>
           ))}
         </div>
@@ -838,10 +1204,10 @@ function Screen8({ onNav }) {
 function Screen9({ onNav, onSignOut }) {
   const { t, lang } = useLang();
   const [editing, setEditing] = useState(false);
-  const [name, setName] = useState('Emily Chan');
+  const [name, setName] = useState('Ethan Lee');
   const [bio, setBio]   = useState(lang==='en'
-    ? 'S5 at DGS. Looking for serious Physics & Chem study buddies. DSE 2027 grind 💪'
-    : 'DGS S5。尋找認真的物理化學學習夥伴。文憑試2027 💪');
+    ? 'S5 at Ying Wa College. Looking for serious Physics & Chem study buddies. DSE 2027 grind 💪'
+    : '英華書院 S5。尋找認真的物理化學學習夥伴。文憑試2027 💪');
 
   const stats = [
     { n:'12', en:'Matches', zh:'配對' },
@@ -880,7 +1246,7 @@ function Screen9({ onNav, onSignOut }) {
             <div style={{ fontSize:20, fontWeight:700, color:C.text }}>{name}</div>
           )}
           <div style={{ display:'flex', alignItems:'center', gap:8 }}>
-            <span style={{ fontSize:12, color:C.textSub }}>S5 · DGS</span>
+            <span style={{ fontSize:12, color:C.textSub }}>S5 · {t('Ying Wa College','英華書院')}</span>
             <span style={{ fontSize:10, color:C.green, background:'rgba(34,197,94,0.12)', border:'1px solid rgba(34,197,94,0.3)', padding:'2px 8px', borderRadius:10, fontWeight:700, letterSpacing:0.5 }}>✓ {t('VERIFIED','已驗證')}</span>
           </div>
         </div>
@@ -951,6 +1317,175 @@ function Screen9({ onNav, onSignOut }) {
 }
 
 // ════════════════════════════════════════════════════════════════
+// SCREEN 10 — Focus (Pomodoro)
+// ════════════════════════════════════════════════════════════════
+function fmt(s) {
+  const m = Math.floor(s / 60).toString().padStart(2, '0');
+  const r = Math.floor(s % 60).toString().padStart(2, '0');
+  return `${m}:${r}`;
+}
+
+function Screen10({ onNav, focus, setFocus }) {
+  const { t } = useLang();
+  const [showSettings, setShowSettings] = useState(false);
+
+  const total = (focus.mode === 'work' ? focus.workMins : focus.breakMins) * 60;
+  const progress = 1 - focus.remaining / total;
+  const isWork = focus.mode === 'work';
+
+  const ringColor = isWork ? '#8b5cf6' : '#22c55e';
+  const ringGrad  = isWork ? C.grad : 'linear-gradient(135deg,#22c55e,#10b981)';
+
+  const R = 120;
+  const CIRC = 2 * Math.PI * R;
+  const offset = CIRC * (1 - progress);
+
+  function start() { setFocus(f => ({ ...f, running:true, paused:false })); }
+  function pause() { setFocus(f => ({ ...f, paused:true })); }
+  function resume(){ setFocus(f => ({ ...f, paused:false })); }
+  function reset() {
+    setFocus(f => ({ ...f, running:false, paused:false, mode:'work', remaining: f.workMins * 60 }));
+  }
+  function setWork(m){ setFocus(f => ({ ...f, workMins:m, remaining: f.mode==='work' && !f.running ? m*60 : f.remaining })); }
+  function setBreak(m){ setFocus(f => ({ ...f, breakMins:m, remaining: f.mode==='break' && !f.running ? m*60 : f.remaining })); }
+
+  return (
+    <div style={{ height:'100%', display:'flex', flexDirection:'column' }}>
+      <div style={{ padding:'14px 22px 10px', borderBottom:'1px solid #1f1f35', display:'flex', alignItems:'center', justifyContent:'space-between' }}>
+        <div>
+          <div style={{ fontSize:20, fontWeight:700, color:C.text }}>{t('Focus','專注時段')}</div>
+          <div style={{ fontSize:12, color:C.textSub, marginTop:2 }}>{t('Stay locked in.','保持專注。')}</div>
+        </div>
+        <button onClick={()=>setShowSettings(s=>!s)} style={{ background:'rgba(255,255,255,0.05)', border:'1px solid #1f1f35', borderRadius:10, padding:'7px 12px', color:C.textSub, fontSize:12, cursor:'pointer', fontFamily:'DM Sans,sans-serif' }}>⚙️ {t('Settings','設定')}</button>
+      </div>
+
+      <div style={{ flex:1, overflowY:'auto', padding:'18px 22px 24px', display:'flex', flexDirection:'column', alignItems:'center', gap:20 }}>
+        <div style={{ display:'flex', gap:6, padding:4, background:'rgba(255,255,255,0.04)', border:'1px solid #1f1f35', borderRadius:24 }}>
+          {[
+            ['work',  t('Work','專注'),  '🍅'],
+            ['break', t('Break','休息'), '☕'],
+          ].map(([k,label,ico]) => (
+            <button key={k} onClick={()=>{
+              if (focus.running) return;
+              setFocus(f => ({ ...f, mode:k, remaining:(k==='work'?f.workMins:f.breakMins)*60 }));
+            }} style={{
+              padding:'7px 18px', borderRadius:20, border:'none',
+              background: focus.mode===k ? (k==='work'?C.grad:'linear-gradient(135deg,#22c55e,#10b981)') : 'transparent',
+              color: focus.mode===k ? '#fff' : C.textSub,
+              fontSize:12, fontWeight:700, cursor:focus.running?'not-allowed':'pointer',
+              fontFamily:'DM Sans,sans-serif', opacity:focus.running?0.6:1,
+            }}>{ico} {label}</button>
+          ))}
+        </div>
+
+        <div style={{ position:'relative', width:280, height:280, display:'flex', alignItems:'center', justifyContent:'center' }}>
+          <svg width="280" height="280" style={{ transform:'rotate(-90deg)' }}>
+            <defs>
+              <linearGradient id="ringGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stopColor={isWork ? '#8b5cf6' : '#22c55e'}/>
+                <stop offset="100%" stopColor={isWork ? '#3b82f6' : '#10b981'}/>
+              </linearGradient>
+            </defs>
+            <circle cx="140" cy="140" r={R} fill="none" stroke="rgba(255,255,255,0.05)" strokeWidth="14"/>
+            <circle cx="140" cy="140" r={R} fill="none" stroke="url(#ringGrad)" strokeWidth="14"
+              strokeLinecap="round" strokeDasharray={CIRC} strokeDashoffset={offset}
+              style={{ transition:'stroke-dashoffset .5s linear', filter:`drop-shadow(0 0 10px ${ringColor}66)` }}/>
+          </svg>
+          <div style={{ position:'absolute', inset:0, display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', textAlign:'center' }}>
+            <div style={{ fontSize:11, fontWeight:700, color:isWork?C.accentLight:'#34d399', letterSpacing:2, textTransform:'uppercase', marginBottom:4 }}>
+              {isWork ? t('Work','專注') : t('Break','休息')}
+            </div>
+            <div style={{ fontSize:54, fontWeight:300, color:C.text, fontFamily:'DM Sans,sans-serif', letterSpacing:-2, lineHeight:1 }}>{fmt(focus.remaining)}</div>
+            <div style={{ fontSize:11, color:C.textMuted, marginTop:8 }}>
+              {t('Sessions today','今天時段')}: <span style={{ color:C.accentLight, fontWeight:700 }}>{focus.sessions}</span>
+            </div>
+          </div>
+        </div>
+
+        <div style={{ display:'flex', gap:14, alignItems:'center' }}>
+          <button onClick={reset} style={{ width:48, height:48, borderRadius:'50%', background:'rgba(255,255,255,0.05)', border:'1px solid #1f1f35', cursor:'pointer', fontSize:16, color:C.textSub }}>↺</button>
+          {!focus.running ? (
+            <button onClick={start} style={{ width:72, height:72, borderRadius:'50%', background:ringGrad, border:'none', cursor:'pointer', fontSize:24, color:'#fff', boxShadow:`0 8px 24px ${ringColor}55` }}>▶</button>
+          ) : focus.paused ? (
+            <button onClick={resume} style={{ width:72, height:72, borderRadius:'50%', background:ringGrad, border:'none', cursor:'pointer', fontSize:24, color:'#fff', boxShadow:`0 8px 24px ${ringColor}55` }}>▶</button>
+          ) : (
+            <button onClick={pause} style={{ width:72, height:72, borderRadius:'50%', background:'rgba(255,255,255,0.08)', border:'1px solid #1f1f35', cursor:'pointer', fontSize:22, color:C.text }}>⏸</button>
+          )}
+          <button onClick={()=>{
+            const nextMode = focus.mode==='work' ? 'break' : 'work';
+            const nextDur  = (nextMode==='work' ? focus.workMins : focus.breakMins) * 60;
+            setFocus(f => ({ ...f, mode:nextMode, remaining:nextDur, running:false, paused:false }));
+          }} style={{ width:48, height:48, borderRadius:'50%', background:'rgba(255,255,255,0.05)', border:'1px solid #1f1f35', cursor:'pointer', fontSize:16, color:C.textSub }}>⏭</button>
+        </div>
+
+        {showSettings && (
+          <div style={{ width:'100%', display:'flex', flexDirection:'column', gap:14, background:'rgba(255,255,255,0.03)', border:'1px solid #1f1f35', borderRadius:16, padding:'16px' }}>
+            <div>
+              <div style={{ fontSize:11, fontWeight:700, color:C.accentLight, letterSpacing:1, textTransform:'uppercase', marginBottom:8 }}>{t('Work duration','專注時長')}</div>
+              <div style={{ display:'flex', gap:6, flexWrap:'wrap' }}>
+                {[15,25,30,45,60].map(m => (
+                  <button key={m} onClick={()=>setWork(m)} disabled={focus.running}
+                    style={{ padding:'7px 14px', borderRadius:20, fontSize:12, fontWeight:600,
+                      border: focus.workMins===m ? '1px solid #8b5cf6' : '1px solid #1f1f35',
+                      background: focus.workMins===m ? 'rgba(139,92,246,0.25)' : 'rgba(255,255,255,0.04)',
+                      color: focus.workMins===m ? '#c084fc' : C.textSub,
+                      cursor:focus.running?'not-allowed':'pointer', fontFamily:'DM Sans,sans-serif',
+                      opacity:focus.running?0.5:1,
+                    }}>{m}m</button>
+                ))}
+              </div>
+            </div>
+            <div>
+              <div style={{ fontSize:11, fontWeight:700, color:'#34d399', letterSpacing:1, textTransform:'uppercase', marginBottom:8 }}>{t('Break duration','休息時長')}</div>
+              <div style={{ display:'flex', gap:6, flexWrap:'wrap' }}>
+                {[5,10,15,20].map(m => (
+                  <button key={m} onClick={()=>setBreak(m)} disabled={focus.running}
+                    style={{ padding:'7px 14px', borderRadius:20, fontSize:12, fontWeight:600,
+                      border: focus.breakMins===m ? '1px solid #22c55e' : '1px solid #1f1f35',
+                      background: focus.breakMins===m ? 'rgba(34,197,94,0.2)' : 'rgba(255,255,255,0.04)',
+                      color: focus.breakMins===m ? '#34d399' : C.textSub,
+                      cursor:focus.running?'not-allowed':'pointer', fontFamily:'DM Sans,sans-serif',
+                      opacity:focus.running?0.5:1,
+                    }}>{m}m</button>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+
+      <BottomNav active="focus" onNav={onNav}/>
+    </div>
+  );
+}
+
+// ════════════════════════════════════════════════════════════════
+// FocusFloat — persistent timer pill shown while running on other tabs
+// ════════════════════════════════════════════════════════════════
+function FocusFloat({ focus, onOpen }) {
+  const isWork = focus.mode === 'work';
+  const grad = isWork ? C.grad : 'linear-gradient(135deg,#22c55e,#10b981)';
+  return (
+    <button onClick={onOpen} style={{
+      position:'absolute', top:10, left:'50%', transform:'translateX(-50%)',
+      zIndex:80, display:'flex', alignItems:'center', gap:8,
+      padding:'7px 14px 7px 8px', borderRadius:24,
+      background:'rgba(9,9,15,0.85)', backdropFilter:'blur(14px)',
+      border:`1px solid ${isWork?'rgba(139,92,246,0.5)':'rgba(34,197,94,0.5)'}`,
+      cursor:'pointer', fontFamily:'DM Sans,sans-serif',
+      boxShadow:`0 6px 24px ${isWork?'rgba(139,92,246,0.3)':'rgba(34,197,94,0.3)'}`,
+      animation:'fadeIn .3s ease',
+    }}>
+      <span style={{ width:24, height:24, borderRadius:'50%', background:grad, display:'flex', alignItems:'center', justifyContent:'center', fontSize:12 }}>
+        {isWork ? '🍅' : '☕'}
+      </span>
+      <span style={{ fontSize:13, fontWeight:700, color:'#fff', fontVariantNumeric:'tabular-nums', letterSpacing:0.3 }}>{fmt(focus.remaining)}</span>
+      {focus.paused && <span style={{ fontSize:10, color:'rgba(255,255,255,0.6)', fontWeight:600 }}>PAUSED</span>}
+    </button>
+  );
+}
+
+// ════════════════════════════════════════════════════════════════
 // PHONE SHELL
 // ════════════════════════════════════════════════════════════════
 function PhoneShell() {
@@ -988,6 +1523,28 @@ function AppInner({ lang, toggle }) {
   const [screen, setScreen] = useState('onboarding');
   const [toast, setToast] = useState({ visible:false, msg:'' });
   const [matches] = useState(CARDS.slice(0,2));
+  const [focus, setFocus] = useState({
+    running:false, paused:false, mode:'work',
+    workMins:25, breakMins:5,
+    remaining: 25 * 60, sessions: 0,
+  });
+
+  useEffect(() => {
+    if (!focus.running || focus.paused) return;
+    const id = setInterval(() => {
+      setFocus(f => {
+        if (f.remaining > 1) return { ...f, remaining: f.remaining - 1 };
+        const nextMode = f.mode === 'work' ? 'break' : 'work';
+        const nextDur  = (nextMode === 'work' ? f.workMins : f.breakMins) * 60;
+        const nextSessions = f.mode === 'work' ? f.sessions + 1 : f.sessions;
+        showToast(f.mode === 'work'
+          ? (lang==='en' ? 'Work done! Take a break ☕' : '專注完成！休息一下 ☕')
+          : (lang==='en' ? 'Break over — back to work 🍅' : '休息結束 — 繼續加油 🍅'));
+        return { ...f, mode:nextMode, remaining:nextDur, sessions:nextSessions, running:false, paused:false };
+      });
+    }, 1000);
+    return () => clearInterval(id);
+  }, [focus.running, focus.paused, lang]);
 
   function showToast(msg) {
     setToast({ visible:true, msg });
@@ -995,12 +1552,14 @@ function AppInner({ lang, toggle }) {
   }
 
   function handleNav(tab) {
-    setScreen({ browse:'browse', create:'create', chat:'chat', profile:'profile' }[tab] || screen);
+    setScreen({ browse:'browse', create:'create', focus:'focus', chat:'chat', profile:'profile' }[tab] || screen);
   }
 
   function ScreenWrap({ children }) {
     return <div style={{ position:'absolute', inset:0, animation:'fadeIn .25s ease' }}>{children}</div>;
   }
+
+  const showFloat = focus.running && screen !== 'focus' && screen !== 'onboarding' && screen !== 'setup' && screen !== 'match';
 
   return (
     <div style={{ position:'relative', width:'100%', height:'100%', background:C.bg, overflow:'hidden' }}>
@@ -1013,6 +1572,8 @@ function AppInner({ lang, toggle }) {
       {screen==='chat'       && <ScreenWrap><Screen7 onNav={handleNav} onSchedule={()=>setScreen('schedule')}/></ScreenWrap>}
       {screen==='schedule'   && <ScreenWrap><Screen8 onNav={handleNav}/></ScreenWrap>}
       {screen==='profile'    && <ScreenWrap><Screen9 onNav={handleNav} onSignOut={()=>{ showToast(lang==='en'?'Signed out 👋':'已登出 👋'); setTimeout(()=>setScreen('onboarding'),600); }}/></ScreenWrap>}
+      {screen==='focus'      && <ScreenWrap><Screen10 onNav={handleNav} focus={focus} setFocus={setFocus}/></ScreenWrap>}
+      {showFloat && <FocusFloat focus={focus} onOpen={()=>setScreen('focus')}/>}
       <Toast msg={toast.msg} visible={toast.visible}/>
     </div>
   );
