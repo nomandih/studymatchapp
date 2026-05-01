@@ -14,7 +14,7 @@ A built-in **Pomodoro timer** keeps users locked in during a study session, and 
 
 **🔗 Try it now: [nomandih.github.io/studymatchapp](https://nomandih.github.io/studymatchapp/)**
 
-Or open [StudyMatch.html](StudyMatch.html) directly in any modern browser. No build step, no install — it loads React, ReactDOM and Babel from CDN and renders a fully interactive iPhone-style mockup that auto-adapts to fullscreen on mobile widths.
+Or open [index.html](index.html) directly in any modern browser. No build step, no install — it loads React, ReactDOM and Babel from CDN and renders a fully interactive iPhone-style mockup that auto-adapts to fullscreen on mobile widths.
 
 ## Screens
 
@@ -94,7 +94,7 @@ All 13 HKDSE subjects are wired with their official topic codes and bilingual na
 ## Repo contents
 
 ```
-StudyMatch.html              Standalone interactive prototype
+index.html                   Standalone interactive prototype (entry point)
 README.md                    This file
 ```
 
